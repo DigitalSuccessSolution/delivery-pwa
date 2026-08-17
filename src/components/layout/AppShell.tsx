@@ -1,0 +1,77 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import DesktopHeader from "./DesktopHeader";
+import MobileHeader from "./MobileHeader";
+import MobileBottomNav from "./MobileBottomNav";
+import Sidebar from "./Sidebar";
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+export default function AppShell({ children }: AppShellProps) {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const checkAuth = () => {
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("moncradel_rider_logged_in");
+        setIsLoggedIn(saved === "true");
+      }
+    };
+    checkAuth();
+
+    window.addEventListener("moncradel-login", checkAuth);
+    window.addEventListener("moncradel-logout", checkAuth);
+    return () => {
+      window.removeEventListener("moncradel-login", checkAuth);
+      window.removeEventListener("moncradel-logout", checkAuth);
+    };
+  }, []);
+
+  if (!isMounted) {
+    return null;
+  }
+
+  // UNAUTHENTICATED (Logged Out): Full-width landing layout without sidebar w-64 gap
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen w-full bg-[#F8F9FA] flex flex-col">
+        <main className="w-full flex-1">{children}</main>
+      </div>
+    );
+  }
+
+  // AUTHENTICATED (Logged In): Fixed Shell — Sidebar & Header never scroll
+  return (
+    <>
+      <div className="h-[100dvh] flex bg-[#F8F9FA] text-slate-800 antialiased selection:bg-[#A5D8FF] font-sans overflow-hidden">
+        {/* Desktop Navigation Sidebar — Fixed column, never scrolls */}
+        <div className="hidden lg:flex shrink-0">
+          <Sidebar />
+        </div>
+
+        {/* Right Column: Header + Scrollable Content */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Header — Fixed at top of content column */}
+          <div className="shrink-0 z-30">
+            <DesktopHeader />
+            <MobileHeader />
+          </div>
+
+          {/* Main Content — ONLY this area scrolls */}
+          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+            <div className="max-w-7xl mx-auto w-full">
+              {children}
+            </div>
+          </main>
+        </div>
+
+        {/* Mobile & Tablet Bottom Navigation Bar */}
+        <MobileBottomNav />
+      </div>
+    </>
+  );
+}
