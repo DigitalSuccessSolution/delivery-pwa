@@ -10,19 +10,39 @@ export default function DesktopHeader() {
   const [notifications] = useState(INITIAL_NOTIFICATIONS);
   const unreadCount = notifications.length;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [fullName, setFullName] = useState("Rider");
+  const [avatar, setAvatar] = useState("/delivery_boy_hero.png");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkAuth = () => {
         const saved = localStorage.getItem("moncradel_rider_logged_in");
         setIsLoggedIn(saved === "true");
+
+        // Load profile data
+        const savedUser = localStorage.getItem("moncradel_rider_user");
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.name) {
+              setFullName(parsed.name);
+            }
+            if (parsed.avatar) setAvatar(parsed.avatar);
+          } catch(e) {}
+        }
       };
+      
       checkAuth();
       window.addEventListener("moncradel-login", checkAuth);
       window.addEventListener("moncradel-logout", checkAuth);
+      
+      // Also listen to storage events to update header when profile is edited in another tab/component
+      window.addEventListener("storage", checkAuth);
+      
       return () => {
         window.removeEventListener("moncradel-login", checkAuth);
         window.removeEventListener("moncradel-logout", checkAuth);
+        window.removeEventListener("storage", checkAuth);
       };
     }
   }, []);
@@ -64,12 +84,10 @@ export default function DesktopHeader() {
           )}
         </Link>
 
-        <div className="h-6 w-px bg-slate-200 mx-1"></div>
-
         <Link href="/profile" className="flex items-center gap-3 hover:bg-slate-50 p-1.5 rounded-xl transition-colors pr-3">
-          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200">
+          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 bg-slate-100">
             <Image
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
+              src={avatar}
               alt="Rider"
               width={36}
               height={36}
@@ -77,7 +95,7 @@ export default function DesktopHeader() {
             />
           </div>
           <div className="hidden lg:block">
-            <p className="text-[13px] font-medium text-slate-900 leading-none">Vikram S.</p>
+            <p className="text-[13px] font-medium text-slate-900 leading-none">{fullName}</p>
             <p className="text-[11px] text-emerald-600 font-medium mt-1">● Online</p>
           </div>
         </Link>

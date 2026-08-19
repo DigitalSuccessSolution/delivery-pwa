@@ -15,6 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  ShieldCheck,
+  FileText,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -24,17 +26,19 @@ export default function Sidebar() {
   const navItems = [
     { name: "Home", href: "/", icon: Home },
     { name: "Orders", href: "/orders", icon: Package },
-    { name: "Live Map", href: "/map", icon: NavIcon },
     { name: "Earnings", href: "/earnings", icon: Banknote },
     { name: "Notifications", href: "/notifications", icon: Bell },
     { name: "Support", href: "/support", icon: MessageSquareText },
     { name: "Profile", href: "/profile", icon: User },
+    { name: "Privacy Policy", href: "/privacy", icon: ShieldCheck },
+    { name: "Terms of Service", href: "/terms", icon: FileText },
   ];
 
   const handleLogout = () => {
     localStorage.removeItem("moncradel_rider_logged_in");
     localStorage.removeItem("moncradel_rider_token");
     localStorage.removeItem("moncradel_rider_user");
+    localStorage.removeItem("moncradel_rider_splash_seen");
     document.cookie = "moncradel_rider_token=; path=/; max-age=0";
     window.dispatchEvent(new Event("moncradel-logout"));
     window.location.href = "/";

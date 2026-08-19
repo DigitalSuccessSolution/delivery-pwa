@@ -1,415 +1,242 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ClipboardList,
   CheckCircle2,
   Banknote,
-  Phone,
-  ShoppingBag,
-  ChevronRight,
-  MapPin,
-  ShieldCheck,
-  Bike,
-  Star,
-  Check,
-  Clock,
-  Bell,
+  Navigation,
   Headphones,
-  Compass,
-  LogOut
+  Bike,
+  Wallet,
+  ChevronRight,
+  Loader2
 } from "lucide-react";
-import IncomingOrderModal from "@/components/features/IncomingOrderModal";
 
 export default function Dashboard() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isMounted, setIsMounted] = useState<boolean>(false);
-  const [userPhone, setUserPhone] = useState("");
   const [isOnline, setIsOnline] = useState(true);
-  const [showOrderModal, setShowOrderModal] = useState(false);
-  const [activeStep, setActiveStep] = useState<"pickup" | "verify_pickup" | "in_transit" | "delivered">("in_transit");
-  const [currentOrder, setCurrentOrder] = useState<any>({
-    id: "9201",
-    patientName: "Aarav Mehta (4 Months)",
-    parentName: "Priya Mehta",
-    parentPhone: "+91 98765-43210",
-    address: "Sunset Blvd, 402",
-    fullAddress: "Flat 402, Sunset Heights, Bandra West, Mumbai",
-    distance: "2.4km",
-    items: '"Organic Puree" x 4 packs',
-    payout: "₹145.00",
-  });
+  const [riderName, setRiderName] = useState("Rider");
 
-  // Handle mobile screen detection
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  // Dashboard Stats State
+  const [isLoading, setIsLoading] = useState(true);
+  const [earnings, setEarnings] = useState(0);
+  const [assignedOrders, setAssignedOrders] = useState(0);
+  const [deliveredOrders, setDeliveredOrders] = useState(0);
 
-  // Check persistent login state & listen for global custom events
   useEffect(() => {
-    setIsMounted(true);
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("moncradel_rider_logged_in");
-      if (saved === "true") {
-        setIsLoggedIn(true);
-      } else {
-        setIsLoggedIn(false);
+      const userStr = localStorage.getItem("moncradel_rider_user");
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          setRiderName(user.name?.split(' ')[0] || "Rider");
+        } catch (e) {}
       }
-
-      const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      checkMobile();
-      window.addEventListener("resize", checkMobile);
-
-      const handleLogoutEvent = () => {
-        setIsLoggedIn(false);
-      };
-
-      const handleLoginEvent = () => {
-        setIsLoggedIn(true);
-      };
-
-      window.addEventListener("moncradel-logout", handleLogoutEvent);
-      window.addEventListener("moncradel-login", handleLoginEvent);
-
-      return () => {
-        window.removeEventListener("resize", checkMobile);
-        window.removeEventListener("moncradel-logout", handleLogoutEvent);
-        window.removeEventListener("moncradel-login", handleLoginEvent);
-      };
     }
   }, []);
 
-  const handleCompleteLogin = (phone?: string) => {
-    if (phone) setUserPhone(phone);
-    setIsLoggedIn(true);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("moncradel_rider_logged_in", "true");
-      window.dispatchEvent(new Event("moncradel-login"));
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("moncradel_rider_token");
+      if (!token) return;
+
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+      // Fetch Earnings
+      const earningRes = await fetch(`${API_URL}/earnings?staffRole=delivery`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const earningData = await earningRes.json();
+      if (earningData.success) {
+        // Find today's earnings specifically
+        const today = new Date().toDateString();
+        const todaysEarnings = (earningData.data || []).filter((e: any) => 
+          new Date(e.createdAt).toDateString() === today
+        ).reduce((acc: number, curr: any) => acc + curr.amount, 0);
+        
+        setEarnings(todaysEarnings);
+      }
+
+      // Fetch Orders (Assigned & Delivered)
+      const orderRes = await fetch(`${API_URL}/orders`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const orderData = await orderRes.json();
+      if (orderData.success) {
+        const orders = orderData.data || [];
+        setAssignedOrders(orders.filter((o: any) => o.status !== 'delivered').length);
+        setDeliveredOrders(orders.filter((o: any) => o.status === 'delivered').length);
+      }
+
+    } catch (err) {
+      console.error("Failed to fetch dashboard stats", err);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("moncradel_rider_logged_in", "false");
-      window.dispatchEvent(new Event("moncradel-logout"));
-    }
-  };
-
-  const handleOpenDeliveryModal = () => {
-    window.dispatchEvent(new CustomEvent("open-delivery-modal"));
-  };
-
-  const handleAcceptNewOrder = (newOrder: any) => {
-    setCurrentOrder(newOrder);
-    setActiveStep("pickup");
-    setShowOrderModal(false);
-  };
-
-  if (!isLoggedIn) {
-    if (!isMounted) return null;
-
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-4 text-center">
-        <h1 className="text-2xl font-bold text-[#1E4E70] mb-2">Moncradel Delivery</h1>
-        <p className="text-slate-500 mb-8">Partner App</p>
-        <button
-          onClick={() => handleCompleteLogin("9876543210")}
-          className="bg-[#1E4E70] hover:bg-[#153852] text-white px-8 py-3 rounded-xl font-semibold shadow-md transition-all active:scale-95"
-        >
-          Login to Partner Portal
-        </button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return (
-    <div className="space-y-6 pb-24 p-2 sm:p-4 font-sans text-[#1E4E70] animate-fadeIn max-w-2xl mx-auto lg:max-w-none lg:mx-0">
+    <div className="space-y-6 pb-16 font-sans text-slate-800 animate-fade-in-up max-w-5xl mx-auto w-full">
       
-      {/* 1. TOP HEADER & SHIFT CONTROLS */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
+      {/* 1. TOP HEADER & ONLINE STATUS */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 bg-white p-5 rounded-xl border border-slate-100 group transition-all">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
-            Hello, Vikram
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 tracking-tight">
+            Hello, {riderName}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-normal">
-            Ready for your afternoon pediatric deliveries?
+          <p className="text-[13px] sm:text-[14px] text-slate-500 font-medium mt-0.5">
+            Drive safely and deliver smiles.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Online / Offline Pill Switch */}
-          <div className="bg-slate-200/60 p-1 rounded-full flex items-center w-48">
-            <button
-              onClick={() => setIsOnline(true)}
-              className={`flex-1 py-1.5 px-3 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                isOnline
-                  ? "bg-[#1E4E70] text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              • Online
-            </button>
-            <button
-              onClick={() => setIsOnline(false)}
-              className={`flex-1 py-1.5 px-3 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                !isOnline
-                  ? "bg-slate-700 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              Offline
-            </button>
-          </div>
-
-          {/* Simulate Incoming Order Trigger */}
-          {isOnline && (
-            <button
-              onClick={() => setShowOrderModal(true)}
-              className="hidden sm:flex bg-[#1E4E70] hover:bg-[#153852] text-white font-semibold text-xs py-2.5 px-4 rounded-2xl shadow-xs items-center gap-2 transition-all cursor-pointer active:scale-98 whitespace-nowrap"
-            >
-              <Bike className="w-4 h-4 text-[#B2F2BB]" />
-              <span>Simulate Order</span>
-            </button>
-          )}
+        {/* Online / Offline Switch */}
+        <div className="bg-slate-100/80 p-1.5 rounded-full flex items-center w-full sm:w-56 border border-slate-200/50">
+          <button
+            onClick={() => setIsOnline(true)}
+            className={`flex-1 py-2 px-3 rounded-full text-[13px] font-semibold transition-all flex items-center justify-center gap-1.5 ${
+              isOnline
+                ? "bg-[#1E4E70] text-white"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            {isOnline && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+            Online
+          </button>
+          <button
+            onClick={() => setIsOnline(false)}
+            className={`flex-1 py-2 px-3 rounded-full text-[13px] font-semibold transition-all flex items-center justify-center gap-1.5 ${
+              !isOnline
+                ? "bg-slate-700 text-white"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Offline
+          </button>
         </div>
       </div>
 
-      {/* Mobile Simulate Order Trigger Button */}
-      {isOnline && (
-        <button
-          onClick={() => setShowOrderModal(true)}
-          className="sm:hidden w-full bg-[#1E4E70] hover:bg-[#153852] text-white font-semibold text-xs py-3 rounded-2xl shadow-xs flex items-center justify-center gap-2 transition-all cursor-pointer active:scale-98"
-        >
-          <Bike className="w-4 h-4 text-[#B2F2BB]" />
-          <span>⚡ Simulate Incoming Baby Order Request</span>
-        </button>
-      )}
-
-
-      {/* 2. PERFORMANCE METRICS CARDS (3-COLUMNS RESPONSIVE GRID) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 lg:gap-5">
-        {/* Card 1: Assigned Today */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-400 block">
-              Assigned Today
-            </span>
-            <p className="text-2xl font-semibold text-slate-900 leading-none">
-              12
-            </p>
-            <span className="text-xs text-slate-400 font-normal block">
-              Tasks scheduled
-            </span>
-          </div>
-
-          <div className="w-12 h-12 rounded-2xl bg-[#A5D8FF]/30 text-[#1E4E70] border border-[#A5D8FF]/60 flex items-center justify-center shrink-0">
-            <ClipboardList className="w-6 h-6" />
-          </div>
-        </div>
-
-        {/* Card 2: Completed */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-2.5 flex-1 pr-4">
-            <span className="text-xs font-semibold text-slate-400 block">
-              Completed
-            </span>
-            <p className="text-2xl font-semibold text-slate-900 leading-none">
-              8
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex-1 bg-slate-100 h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-500 h-full w-[66%] rounded-full" />
-              </div>
-              <span className="text-xs font-semibold text-slate-600">66%</span>
-            </div>
-          </div>
-
-          <div className="w-12 h-12 rounded-2xl bg-[#B2F2BB]/40 text-[#1E4E70] border border-[#B2F2BB] flex items-center justify-center shrink-0">
-            <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-          </div>
-        </div>
-
-        {/* Card 3: Earnings */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-semibold text-slate-400 block">
-              Earnings Today
-            </span>
-            <p className="text-2xl font-semibold text-slate-900 leading-none">
-              ₹1,450.00
-            </p>
-            <span className="text-xs font-semibold text-rose-500 block">
-              +₹140.00 since 1PM
-            </span>
-          </div>
-
-          <div className="w-12 h-12 rounded-2xl bg-[#FFD1DC]/40 text-[#1E4E70] border border-[#FFD1DC] flex items-center justify-center shrink-0">
-            <Banknote className="w-6 h-6 text-rose-600" />
-          </div>
-        </div>
-      </div>
-
-
-      {/* 3. MAIN DASHBOARD CONTENT SPLIT (2-COLUMNS DESKTOP GRID) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 2. STATS OVERVIEW */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5">
         
-        {/* LEFT 2 COLUMNS: CURRENT ACTIVE ORDER & MAP */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">
-              Current Active Order & Live Route
+        {/* Earnings Card */}
+        <div className="col-span-2 sm:col-span-1 bg-blue-100/70 rounded-xl p-5 relative overflow-hidden flex flex-col justify-center min-h-[110px] transition-colors">
+          <div className="relative z-10">
+            <span className="text-[13px] text-blue-900/70 font-semibold tracking-wide block mb-1">
+              Today's Earnings
+            </span>
+            <h2 className="text-[28px] font-semibold text-blue-950 tracking-tight leading-none flex items-center gap-2">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-blue-600/50" /> : `₹${earnings.toFixed(2)}`}
             </h2>
-            <Link
-              href="/orders"
-              className="text-xs font-semibold text-[#1E4E70] hover:underline flex items-center gap-0.5"
-            >
-              <span>View All Orders</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
+          <Banknote className="absolute right-4 bottom-4 w-12 h-12 text-blue-500/20" />
+        </div>
 
-          <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
-            {/* Map Preview Stage */}
-            <div className="relative rounded-2xl overflow-hidden h-48 lg:h-64 border border-slate-200 shadow-inner">
-              <Image
-                src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800"
-                alt="Live route map preview"
-                fill
-                className="object-cover"
-              />
-              {/* Center Compass Marker */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-11 h-11 rounded-full bg-[#1E4E70]/90 backdrop-blur-md text-white flex items-center justify-center shadow-lg border-2 border-white">
-                  <Compass className="w-5 h-5 text-[#A5D8FF] animate-spin-slow" />
-                </div>
-              </div>
-            </div>
+        {/* Deliveries Card */}
+        <div className="col-span-1 bg-emerald-100/60 rounded-xl p-4 sm:p-5 flex flex-col justify-center min-h-[110px] relative overflow-hidden">
+          <span className="text-[13px] text-emerald-900/70 font-semibold flex items-center gap-1.5 mb-2 relative z-10">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            Delivered
+          </span>
+          <span className="text-[24px] font-semibold text-emerald-950 leading-none relative z-10 flex items-center gap-2">
+             {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-emerald-600/50" /> : deliveredOrders}
+          </span>
+          <CheckCircle2 className="absolute right-4 bottom-4 w-12 h-12 text-emerald-500/10" />
+        </div>
 
-            {/* Status Badge & Remaining Distance Row */}
-            <div className="flex items-center justify-between pt-1">
-              <span className="bg-[#A5D8FF]/30 text-[#1E4E70] font-semibold text-xs px-3 py-1 rounded-full border border-[#A5D8FF]/60 uppercase tracking-wider">
-                IN TRANSIT
-              </span>
+        {/* Assigned Card */}
+        <div className="col-span-1 bg-orange-100/60 rounded-xl p-4 sm:p-5 flex flex-col justify-center min-h-[110px] relative overflow-hidden">
+          <span className="text-[13px] text-orange-900/70 font-semibold flex items-center gap-1.5 mb-2 relative z-10">
+            <ClipboardList className="w-4 h-4 text-orange-500" />
+            Assigned
+          </span>
+          <span className="text-[24px] font-semibold text-orange-950 leading-none relative z-10 flex items-center gap-2">
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-orange-600/50" /> : assignedOrders}
+          </span>
+          <ClipboardList className="absolute right-4 bottom-4 w-12 h-12 text-orange-500/10" />
+        </div>
 
-              <div className="text-right">
-                <span className="text-base font-semibold text-slate-900 block leading-tight">
-                  {currentOrder.distance}
-                </span>
-                <span className="text-[10px] text-slate-400 font-normal">
-                  Remaining Distance
-                </span>
-              </div>
-            </div>
+      </div>
 
-            {/* Order Title & Address */}
-            <div className="space-y-0.5">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Order #{currentOrder.id}
-              </h3>
-              <p className="text-xs text-slate-500 font-normal">
-                Delivery to: <strong className="text-slate-800 font-semibold">{currentOrder.address}</strong>
-              </p>
-            </div>
-
-            {/* Item Details Inner Light Card */}
-            <div className="bg-[#F8F9FA] p-3.5 rounded-2xl border border-slate-200/70 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-white text-[#1E4E70] border border-slate-200 flex items-center justify-center shrink-0 shadow-xs">
-                <ShoppingBag className="w-4.5 h-4.5" />
+      {/* 3. QUICK ACTIONS GRID */}
+      <div>
+        <h2 className="text-[15px] font-semibold text-slate-800 mb-3 px-1">
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
+          
+          <Link
+            href="/orders"
+            className="bg-white rounded-xl p-5 border border-slate-100 flex items-center justify-between hover:border-[#1E4E70]/30 hover:bg-slate-50/50 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <Bike className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  ITEM DETAILS
-                </span>
-                <p className="text-xs font-semibold text-slate-800">
-                  {currentOrder.items}
-                </p>
+                <h3 className="font-semibold text-[15px] text-slate-900">Manage Orders</h3>
+                <p className="text-[13px] font-medium text-slate-500 mt-0.5">View active and ready tasks</p>
               </div>
             </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-[#1E4E70] transition-colors" />
+          </Link>
 
-            {/* Action Row: Start Delivery / Verify OTP + Phone Button */}
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                onClick={handleOpenDeliveryModal}
-                className="flex-1 bg-[#1E4E70] hover:bg-[#153852] text-white font-semibold text-xs py-3.5 rounded-2xl shadow-sm transition-all cursor-pointer active:scale-98 text-center"
-              >
-                Start Delivery • Verify OTP
-              </button>
-
-              <a
-                href={`tel:${currentOrder.parentPhone}`}
-                className="w-12 h-12 rounded-2xl border border-slate-200 hover:bg-slate-50 text-[#1E4E70] flex items-center justify-center shrink-0 transition-colors shadow-xs"
-                title="Call Customer"
-              >
-                <Phone className="w-4.5 h-4.5" />
-              </a>
+          <Link
+            href="/earnings"
+            className="bg-white rounded-xl p-5 border border-slate-100 flex items-center justify-between hover:border-[#1E4E70]/30 hover:bg-slate-50/50 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <Wallet className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[15px] text-slate-900">Earnings & Wallet</h3>
+                <p className="text-[13px] font-medium text-slate-500 mt-0.5">Track payouts & transactions</p>
+              </div>
             </div>
-          </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-[#1E4E70] transition-colors" />
+          </Link>
+
+          <Link
+            href="/map"
+            className="bg-white rounded-xl p-5 border border-slate-100 flex items-center justify-between hover:border-[#1E4E70]/30 hover:bg-slate-50/50 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+                <Navigation className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[15px] text-slate-900">Live Map</h3>
+                <p className="text-[13px] font-medium text-slate-500 mt-0.5">Navigate active deliveries</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-[#1E4E70] transition-colors" />
+          </Link>
+
+          <Link
+            href="/support"
+            className="bg-white rounded-xl p-5 border border-slate-100 flex items-center justify-between hover:border-[#1E4E70]/30 hover:bg-slate-50/50 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <Headphones className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[15px] text-slate-900">Support Desk</h3>
+                <p className="text-[13px] font-medium text-slate-500 mt-0.5">Get help or raise a ticket</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-[#1E4E70] transition-colors" />
+          </Link>
+
         </div>
-
-        {/* RIGHT 1 COLUMN: QUICK ACTIONS & HUB PORTAL */}
-        <div className="space-y-4">
-          <h2 className="text-base font-semibold text-slate-900">
-            Quick Actions & Kitchen Hub
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3">
-            {/* Card 1: Pickup Orders */}
-            <Link
-              href="/orders"
-              className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center space-y-3 hover:border-slate-300 transition-all group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#A5D8FF]/30 text-[#1E4E70] border border-[#A5D8FF]/60 flex items-center justify-center group-hover:scale-105 transition-transform">
-                <ShoppingBag className="w-6 h-6" />
-              </div>
-              <span className="font-semibold text-slate-900 text-xs">
-                View Orders
-              </span>
-            </Link>
-
-            {/* Card 2: Support */}
-            <Link
-              href="/support"
-              className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center space-y-3 hover:border-slate-300 transition-all group"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#B2F2BB]/40 text-[#1E4E70] border border-[#B2F2BB] flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Headphones className="w-6 h-6 text-emerald-700" />
-              </div>
-              <span className="font-semibold text-slate-900 text-xs">
-                Support Desk
-              </span>
-            </Link>
-          </div>
-
-          {/* Kitchen Hub Insulation Status Card */}
-          <div className="bg-gradient-to-br from-[#A5D8FF]/20 via-sky-50 to-blue-50/60 p-5 rounded-3xl border border-[#A5D8FF]/60 shadow-xs space-y-3 text-slate-800">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#1E4E70]">
-                Moncradel Kitchen #K-402
-              </span>
-              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                36.5°C Sealed ✓
-              </span>
-            </div>
-            <h3 className="font-semibold text-sm text-[#1E4E70]">
-              Pediatric Thermal Insulation Protocol Active
-            </h3>
-            <p className="text-xs text-slate-600 font-normal leading-relaxed">
-              All diet containers pre-heated/chilled at kitchen bays. Keep thermal bag zipped during express transit.
-            </p>
-          </div>
-        </div>
-
       </div>
-
-      {/* Incoming Delivery Request Modal */}
-      <IncomingOrderModal
-        isOpen={showOrderModal}
-        onClose={() => setShowOrderModal(false)}
-        onAccept={handleAcceptNewOrder}
-      />
+      
     </div>
   );
 }

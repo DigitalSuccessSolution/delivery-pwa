@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "MONCRADEL Delivery",
+    title: "",
   },
 };
 
@@ -37,8 +37,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${poppins.variable} font-sans h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#F8F9FA] text-slate-800 antialiased font-sans selection:bg-[#A5D8FF] selection:text-[#1E4E70]">
+      <body 
+        className="min-h-full flex flex-col bg-[#F8F9FA] text-slate-800 antialiased font-sans selection:bg-[#A5D8FF] selection:text-[#1E4E70]"
+        suppressHydrationWarning
+      >
         <AppShell>{children}</AppShell>
       </body>
     </html>

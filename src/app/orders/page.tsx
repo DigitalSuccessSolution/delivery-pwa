@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -14,26 +14,103 @@ import {
   ChevronRight,
   ShieldCheck,
   X,
+  Loader2,
 } from "lucide-react";
-import { INITIAL_DELIVERY_TASKS, DeliveryTask } from "@/data/mockData";
+
+interface DeliveryTask {
+  id: string;
+  orderNumber: string;
+  status: string;
+  parentName: string;
+  kitchenAddress: string;
+  address: string;
+  distanceKm: number;
+  itemSummary: string;
+  packCount: number;
+  mealImage: string;
+}
 
 export default function OrdersPage() {
   const router = useRouter();
 
-  // Fake state for hardcoded data
-  const [tasks, setTasks] = useState<DeliveryTask[]>(INITIAL_DELIVERY_TASKS);
+  const [tasks, setTasks] = useState<DeliveryTask[]>([]);
   const [activeTab, setActiveTab] = useState<
     "ready" | "out_for_delivery" | "delivered"
   >("ready");
-  // Filter based on selected tab
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchOrders = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem("moncradel_rider_token");
+      if (!token) return;
+
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+      const response = await fetch(`${apiUrl}/orders`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Map backend orders to frontend DeliveryTask shape
+        const mappedOrders = data.data.map((order: any) => ({
+          id: order._id,
+          orderNumber: `#${order._id.substring(order._id.length - 6).toUpperCase()}`,
+          status: order.status,
+          parentName: order.parentId?.name || "Customer",
+          kitchenAddress: order.kitchenId?.address || "Moncradel Kitchen Hub",
+          address: order.deliveryAddress?.street
+            ? `${order.deliveryAddress.street}, ${order.deliveryAddress.city}`
+            : "Delivery Address",
+          distanceKm: order.distanceKm || 2.5,
+          itemSummary: order.items?.map((i: any) => i.mealId?.name || i.productId?.name || "Item").join(", ") || "No items",
+          packCount: order.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0,
+          mealImage: order.items?.[0]?.mealId?.imageUrl || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800"
+        }));
+        setTasks(mappedOrders);
+      }
+    } catch (err) {
+      console.error("Failed to fetch orders:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
   const filteredTasks = tasks.filter((t) => t.status === activeTab);
 
-  const handlePickup = (id: string) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === id ? { ...t, status: "out_for_delivery" } : t,
-      ),
-    );
+  const handlePickup = async (id: string) => {
+    try {
+      const token = localStorage.getItem("moncradel_rider_token");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+      const res = await fetch(`${apiUrl}/orders/${id}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "out_for_delivery" }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setTasks(
+          tasks.map((t) =>
+            t.id === id ? { ...t, status: "out_for_delivery" } : t
+          )
+        );
+      } else {
+        alert("Failed to confirm pickup: " + data.message);
+      }
+    } catch (err) {
+      alert("Error confirming pickup. Please try again.");
+    }
   };
 
   const handleCompleteDelivery = (id: string) => {
@@ -41,7 +118,7 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in-up pb-16 max-w-2xl mx-auto lg:max-w-none lg:mx-0 font-sans w-full">
+    <div className="space-y-4 sm:space-y-6 animate-fade-in-up pb-24 max-w-2xl mx-auto lg:max-w-none lg:mx-0 font-sans w-full">
       {/* 1. HEADER SECTION */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -52,28 +129,24 @@ export default function OrdersPage() {
             Manage your pickups and active deliveries.
           </p>
         </div>
-
-
       </div>
 
       {/* Tabs Container */}
-      <div className="flex items-center gap-2.5 w-full overflow-x-auto no-scrollbar mt-4 pb-1">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 w-full mt-4 pb-1">
         {/* Ready Tab */}
         <button
           onClick={() => setActiveTab("ready")}
-          className={`flex-none py-2 px-4 rounded-full text-[14px] font-medium transition-all flex items-center justify-center gap-2 ${
-            activeTab === "ready"
-              ? "bg-[#1E4E70] text-white border border-[#1E4E70] shadow-md shadow-[#1E4E70]/20"
+          className={`flex-1 py-2 px-1 sm:px-4 rounded-full text-[11px] xs:text-[12px] sm:text-[14px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 ${activeTab === "ready"
+              ? "bg-[#1E4E70] text-white border border-[#1E4E70]"
               : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
-          }`}
+            }`}
         >
-          Ready at Hub
+          <span className="truncate">Ready</span>
           <span
-            className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-              activeTab === "ready"
+            className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium shrink-0 ${activeTab === "ready"
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 text-slate-500"
-            }`}
+              }`}
           >
             {tasks.filter((t) => t.status === "ready").length}
           </span>
@@ -82,19 +155,17 @@ export default function OrdersPage() {
         {/* Out for Delivery Tab */}
         <button
           onClick={() => setActiveTab("out_for_delivery")}
-          className={`flex-none py-2 px-4 rounded-full text-[14px] font-medium transition-all flex items-center justify-center gap-2 ${
-            activeTab === "out_for_delivery"
-              ? "bg-[#1E4E70] text-white border border-[#1E4E70] shadow-md shadow-[#1E4E70]/20"
+          className={`flex-1 py-2 px-1 sm:px-4 rounded-full text-[11px] xs:text-[12px] sm:text-[14px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 ${activeTab === "out_for_delivery"
+              ? "bg-[#1E4E70] text-white border border-[#1E4E70]"
               : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
-          }`}
+            }`}
         >
-          My Deliveries
+          <span className="truncate">Active</span>
           <span
-            className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-              activeTab === "out_for_delivery"
+            className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium shrink-0 ${activeTab === "out_for_delivery"
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 text-slate-500"
-            }`}
+              }`}
           >
             {tasks.filter((t) => t.status === "out_for_delivery").length}
           </span>
@@ -103,19 +174,17 @@ export default function OrdersPage() {
         {/* Delivered Tab */}
         <button
           onClick={() => setActiveTab("delivered")}
-          className={`flex-none py-2 px-4 rounded-full text-[14px] font-medium transition-all flex items-center justify-center gap-2 ${
-            activeTab === "delivered"
-              ? "bg-[#1E4E70] text-white border border-[#1E4E70] shadow-md shadow-[#1E4E70]/20"
+          className={`flex-1 py-2 px-1 sm:px-4 rounded-full text-[11px] xs:text-[12px] sm:text-[14px] font-medium transition-all flex items-center justify-center gap-1 sm:gap-2 ${activeTab === "delivered"
+              ? "bg-[#1E4E70] text-white border border-[#1E4E70]"
               : "bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50"
-          }`}
+            }`}
         >
-          Completed
+          <span className="truncate">Completed</span>
           <span
-            className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-              activeTab === "delivered"
+            className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium shrink-0 ${activeTab === "delivered"
                 ? "bg-white/20 text-white"
                 : "bg-slate-100 text-slate-500"
-            }`}
+              }`}
           >
             {tasks.filter((t) => t.status === "delivered").length}
           </span>
@@ -123,132 +192,147 @@ export default function OrdersPage() {
       </div>
 
       {/* 3. ORDER CARDS LIST */}
-      <div
-        className={
-          filteredTasks.length === 0
-            ? "mt-4"
-            : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"
-        }
-      >
-        {filteredTasks.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-10 flex flex-col items-center justify-center text-center">
-            <PackageCheck className="w-12 h-12 text-slate-300 mb-3" />
-            <h3 className="text-[16px] font-medium text-slate-800">
-              No orders found
-            </h3>
-            <p className="text-[14px] text-slate-500 mt-1">
-              {activeTab === "ready"
-                ? "There are no ready orders at the hub right now."
-                : activeTab === "out_for_delivery"
-                  ? "You don't have any active deliveries."
-                  : "No completed deliveries yet."}
-            </p>
-          </div>
-        ) : (
-          filteredTasks.map((order) => (
-            <div
-              key={order.id}
-              className="bg-white rounded-lg border border-slate-200/80 p-4 space-y-4 hover:border-slate-300 transition-colors"
-            >
-              {/* Header: Order ID & Distance */}
-              <div className="flex items-center justify-between pb-1">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-brand text-[16px]">
-                    {order.orderNumber}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-4" />
+          <p className="text-slate-500 font-medium">Loading orders...</p>
+        </div>
+      ) : (
+        <div
+          className={
+            filteredTasks.length === 0
+              ? "mt-4"
+              : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"
+          }
+        >
+          {filteredTasks.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-10 flex flex-col items-center justify-center text-center">
+              <PackageCheck className="w-12 h-12 text-slate-300 mb-3" />
+              <h3 className="text-[16px] font-medium text-slate-800">
+                No orders found
+              </h3>
+              <p className="text-[14px] text-slate-500 mt-1">
+                {activeTab === "ready"
+                  ? "There are no ready orders at the hub right now."
+                  : activeTab === "out_for_delivery"
+                    ? "You don't have any active deliveries."
+                    : "No completed deliveries yet."}
+              </p>
+            </div>
+          ) : (
+            filteredTasks.map((order) => (
+              <div
+                key={order.id}
+                onClick={() => router.push(`/orders/${order.id}`)}
+                className="bg-white rounded-xl border border-slate-100 p-4 sm:p-5 hover:border-slate-200 transition-colors flex flex-col gap-3 cursor-pointer"
+              >
+                {/* Header: Order ID & Distance */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-black text-[15px]">
+                      {order.orderNumber}
+                    </span>
+                  </div>
+                  <span className="text-[12px] sm:text-[13px] font-medium text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">
+                    {order.distanceKm} km away
                   </span>
                 </div>
-                <span className="text-[14px] font-medium text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-100">
-                  {order.distanceKm} km away
-                </span>
-              </div>
 
-              {/* Body: Customer & Address */}
-              <div className="flex gap-4">
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div>
-                    <p className="text-[16px] font-semibold text-slate-900 truncate">
-                      {order.parentName}
+                {/* Body: Customer & Address */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-[15px] sm:text-[16px] font-medium text-black truncate">
+                    {order.parentName}
+                  </p>
+
+                  <div className="space-y-2.5">
+                    <div className="flex items-start gap-2.5 text-[13px] sm:text-[14px] text-black/80 font-medium">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
+                      <span className="leading-snug flex-1">
+                        <span className="font-medium text-black">Pickup: </span>{order.kitchenAddress}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 text-[13px] sm:text-[14px] text-black/80 font-medium">
+                      <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0"></div>
+                      <span className="leading-snug flex-1">
+                        <span className="font-medium text-black">Drop: </span>{order.address}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Meal Items Summary */}
+                <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <Image
+                      src={order.mealImage}
+                      alt="Meal"
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
+                    <p className="text-[13px] sm:text-[14px] font-medium text-black truncate opacity-90">
+                      {order.itemSummary}
                     </p>
                   </div>
+                  <span className="text-[12px] sm:text-[13px] font-medium text-black opacity-60 shrink-0 ml-2">
+                    {order.packCount} items
+                  </span>
+                </div>
 
-                  <div className="pt-2 space-y-3">
-                    <div className="flex items-start gap-3 text-[14px] text-slate-600">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1.5 shrink-0 ring-4 ring-emerald-50"></div>
-                      <span className="leading-snug flex-1">
-                        <span className="font-medium text-slate-700">
-                          Pickup:{" "}
-                        </span>
-                        {order.kitchenAddress}
-                      </span>
-                    </div>
-
-                    <div className="flex items-start gap-3 text-[14px] text-slate-600">
-                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 mt-1.5 shrink-0 ring-4 ring-rose-50"></div>
-                      <span className="leading-snug flex-1">
-                        <span className="font-medium text-slate-700">
-                          Drop:{" "}
-                        </span>
-                        {order.address}
-                      </span>
-                    </div>
+                {/* Action Buttons */}
+                {activeTab !== "delivered" && (
+                  <div className="pt-2 flex items-center gap-2">
+                    {activeTab === "ready" ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePickup(order.id);
+                        }}
+                        className="w-full bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                      >
+                        <PackageCheck className="w-5 h-5" />
+                        <span>Confirm Pickup</span>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/map?orderId=${order.id}`);
+                          }}
+                          className="w-1/2 bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                        >
+                          <Navigation className="w-4 h-4" />
+                          <span>Map</span>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCompleteDelivery(order.id);
+                          }}
+                          className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                        >
+                          <ShieldCheck className="w-5 h-5" />
+                          <span>Deliver</span>
+                        </button>
+                      </>
+                    )}
                   </div>
-                </div>
-              </div>
+                )}
 
-              {/* Meal Items Summary */}
-              <div className="bg-slate-50/70 rounded-xl p-2.5 flex items-center justify-between border border-slate-100">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <Image
-                    src={order.mealImage}
-                    alt="Meal"
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200/60 shadow-sm bg-white"
-                  />
-                  <p className="text-[14px] font-semibold text-[#1E4E70] truncate">
-                    {order.itemSummary}
-                  </p>
-                </div>
-                <span className="text-[13px] font-medium text-slate-500 shrink-0 ml-2">
-                  {order.packCount} items
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-3 flex items-center gap-3">
-                <button
-                  onClick={() => router.push(`/orders/${order.id}`)}
-                  className="flex-1 bg-white border border-[#1E4E70] text-[#1E4E70] hover:bg-slate-50 font-medium text-[15px] py-2.5 rounded-xl transition-all active:scale-95"
-                >
-                  View Details
-                </button>
-                {activeTab === "ready" ? (
-                  <button
-                    onClick={() => handlePickup(order.id)}
-                    className="flex-[1.5] bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[15px] py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 border border-[#1E4E70]"
-                  >
-                    <PackageCheck className="w-4 h-4 text-[#A5D8FF]" />
-                    <span>Confirm Pickup</span>
-                  </button>
-                ) : activeTab === "out_for_delivery" ? (
-                  <button
-                    onClick={() => handleCompleteDelivery(order.id)}
-                    className="flex-[1.5] bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[15px] py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 border border-emerald-600"
-                  >
-                    <ShieldCheck className="w-4 h-4 text-emerald-200" />
-                    <span>Deliver</span>
-                  </button>
-                ) : (
-                  <div className="flex-[1.5] bg-slate-100 border border-slate-200 text-slate-500 font-medium text-[15px] py-2.5 rounded-xl flex items-center justify-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Completed</span>
+                {activeTab === "delivered" && (
+                  <div className="pt-2 flex items-center justify-center">
+                    <span className="flex items-center gap-1.5 text-emerald-700 font-medium text-[14px]">
+                      <CheckCircle2 className="w-4 h-4" /> Delivered Successfully
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
-          ))
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }

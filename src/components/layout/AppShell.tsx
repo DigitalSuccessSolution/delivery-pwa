@@ -38,8 +38,8 @@ export default function AppShell({ children }: AppShellProps) {
   // UNAUTHENTICATED (Logged Out): Full-width landing layout without sidebar w-64 gap
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen w-full bg-[#F8F9FA] flex flex-col">
-        <main className="w-full flex-1">{children}</main>
+      <div className="fixed inset-0 h-[100dvh] w-full bg-[#F8F9FA] flex flex-col overflow-hidden">
+        <main className="w-full h-full flex-1 overflow-hidden">{children}</main>
       </div>
     );
   }

@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  Package,
-  Banknote,
+  ClipboardList,
+  Wallet,
   User,
-  Navigation as NavIcon,
+  MapPin,
 } from "lucide-react";
 
 export default function MobileBottomNav() {
@@ -35,23 +35,22 @@ export default function MobileBottomNav() {
 
   // Mobile Bottom Navigation — 5 main tabs
   const mobileNavItems = [
-    { name: "Home", href: "/", icon: Home },
-    { name: "Orders", href: "/orders", icon: Package },
-    { name: "Map", href: "/map", icon: NavIcon },
-    { name: "Earnings", href: "/earnings", icon: Banknote },
-    { name: "Profile", href: "/profile", icon: User },
+    { name: "Home", href: "/", icon: Home, activeBg: "bg-blue-100" },
+    { name: "Orders", href: "/orders", icon: ClipboardList, activeBg: "bg-emerald-100" },
+    { name: "Earnings", href: "/earnings", icon: Wallet, activeBg: "bg-amber-100" },
+    { name: "Account", href: "/account", icon: User, activeBg: "bg-purple-100" },
   ];
 
-  // Only show bottom nav on main 5 tab routes
-  const isMainTabRoute = ["/", "/orders", "/map", "/earnings", "/profile"].includes(pathname);
+  // Only show bottom nav on main 4 tab routes
+  const isMainTabRoute = ["/", "/orders", "/earnings", "/account"].includes(pathname);
 
   if (!isMainTabRoute) {
     return null;
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] w-full">
-      <div className="max-w-md mx-auto flex items-center justify-around">
+    <nav className="md:hidden fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-4 z-40">
+      <div className="max-w-md mx-auto bg-white rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 flex items-center justify-between px-3 py-2">
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -60,21 +59,15 @@ export default function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-1 group py-1 px-3"
+              className={`flex items-center justify-center rounded-full transition-all duration-500 ease-out ${isActive
+                  ? `${item.activeBg} text-[#1E4E70] px-5 h-[46px]`
+                  : "bg-transparent text-slate-500 hover:bg-slate-50 w-[46px] h-[46px]"
+                }`}
             >
-              <div
-                className={`w-12 h-8 rounded-full flex items-center justify-center transition-all ${
-                  isActive
-                    ? "bg-[#1E4E70] text-white shadow-sm scale-105"
-                    : "text-slate-500 group-hover:text-slate-900"
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? "stroke-[2]" : "stroke-[1.6]"}`} />
-              </div>
+              <Icon className={`w-5 h-5 shrink-0 transition-transform duration-500 ${isActive ? "scale-110 stroke-[2]" : "scale-100 stroke-[2]"}`} />
               <span
-                className={`text-[11px] transition-colors ${
-                  isActive ? "text-[#1E4E70] font-semibold" : "text-slate-500 font-medium"
-                }`}
+                className={`text-[13px] font-semibold tracking-wide whitespace-nowrap transition-all duration-500 overflow-hidden ${isActive ? "max-w-[100px] opacity-100 ml-2.5" : "max-w-0 opacity-0 ml-0"
+                  }`}
               >
                 {item.name}
               </span>

@@ -210,3 +210,28 @@ export const INITIAL_NOTIFICATIONS: RiderNotification[] = [
     type: 'earnings'
   }
 ];
+
+export interface PayoutItem {
+  id: string;
+  amount: number;
+  status: 'processing' | 'transferred';
+  createdAt: string;
+  notes: string;
+}
+
+export const INITIAL_PAYOUTS: PayoutItem[] = [
+  {
+    id: 'pay-1',
+    amount: 1500.00,
+    status: 'transferred',
+    createdAt: 'Aug 10, 2026',
+    notes: 'Bank Transfer'
+  },
+  {
+    id: 'pay-2',
+    amount: 850.00,
+    status: 'transferred',
+    createdAt: 'Aug 03, 2026',
+    notes: 'Bank Transfer'
+  }
+];

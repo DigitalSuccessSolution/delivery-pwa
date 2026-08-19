@@ -15,24 +15,39 @@ export default function MobileHeader() {
   const unreadCount = notifications.length;
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [avatar, setAvatar] = useState("/delivery_boy_hero.png");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkAuth = () => {
         const saved = localStorage.getItem("moncradel_rider_logged_in");
         setIsLoggedIn(saved === "true");
+
+        // Load profile data
+        const savedUser = localStorage.getItem("moncradel_rider_user");
+        if (savedUser) {
+          try {
+            const parsed = JSON.parse(savedUser);
+            if (parsed.avatar) setAvatar(parsed.avatar);
+          } catch(e) {}
+        }
       };
+      
       checkAuth();
       window.addEventListener("moncradel-login", checkAuth);
       window.addEventListener("moncradel-logout", checkAuth);
+      window.addEventListener("storage", checkAuth);
+      
       return () => {
         window.removeEventListener("moncradel-login", checkAuth);
         window.removeEventListener("moncradel-logout", checkAuth);
+        window.removeEventListener("storage", checkAuth);
       };
     }
   }, []);
 
   if (!isLoggedIn) return null;
+  if (pathname === "/account" || pathname === "/profile") return null;
 
   const isMainTabRoute = ["/", "/orders", "/map", "/earnings", "/profile", "/notifications", "/support"].includes(pathname);
 
@@ -79,10 +94,10 @@ export default function MobileHeader() {
       <div className="flex items-center justify-between gap-4">
         {/* Left: Rider Avatar & Status */}
         <div className="flex items-center gap-3">
-          <Link href="/profile" className="relative">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-[#A5D8FF]">
+          <Link href="/account" className="relative">
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-[#A5D8FF] bg-slate-100">
               <Image
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
+                src={avatar}
                 alt="Rider"
                 width={40}
                 height={40}

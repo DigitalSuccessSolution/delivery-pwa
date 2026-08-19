@@ -1,245 +1,335 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect } from "react";
+import api from "@/lib/axios";
 import {
   Bell,
-  Package,
-  Truck,
-  Banknote,
-  ShieldCheck,
   CheckCircle2,
   Trash2,
-  ChevronRight,
-  Flame,
   X,
-  HeartPulse
+  Loader2
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 interface NotificationItem {
-  id: string;
+  _id: string;
   title: string;
-  text: string;
-  time: string;
-  type: "order" | "pickup" | "earnings" | "system";
+  message: string;
+  createdAt: string;
   isRead: boolean;
-  actionLink?: string;
-  actionText?: string;
 }
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "n-1",
-    title: "New Delivery Assigned",
-    text: "Order #ORD-9921 for Sarah J. & Baby Leo. Priority pickup slot: 10:30 AM at Bay 1.",
-    time: "5 min ago",
-    type: "order",
-    isRead: false,
-    actionLink: "/orders",
-    actionText: "View Order Task"
-  },
-  {
-    id: "n-2",
-    title: "Kitchen Thermal Box Ready",
-    text: "36.5°C thermal diet box for Order #9201 sealed at Moncradel Kitchen #K-402, Bay 3.",
-    time: "20 min ago",
-    type: "pickup",
-    isRead: false,
-    actionLink: "/orders",
-    actionText: "View Order"
-  },
-  {
-    id: "n-3",
-    title: "Weekly Incentive Bonus Credited",
-    text: "You earned a ₹1,500.00 bonus for completing 25 peak express deliveries this week.",
-    time: "2 hours ago",
-    type: "earnings",
-    isRead: false,
-    actionLink: "/earnings",
-    actionText: "View Wallet Payout"
-  },
-  {
-    id: "n-4",
-    title: "Thermal Gear Replacement Reminder",
-    text: "Free replacement delivery bags are ready for pickup at Moncradel Central Hub.",
-    time: "Yesterday",
-    type: "system",
-    isRead: true,
-    actionLink: "/profile",
-    actionText: "Check Gear Status"
-  }
-];
-
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
-  const [activeFilter, setActiveFilter] = useState<"all" | "order" | "pickup" | "earnings" | "system">("all");
-  const [showPushBanner, setShowPushBanner] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null);
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
-  const filteredNotifications = notifications.filter((n) => {
-    if (activeFilter === "all") return true;
-    return n.type === activeFilter;
-  });
-
-  const handleTriggerPushBanner = () => {
-    setShowPushBanner(true);
-    setTimeout(() => setShowPushBanner(false), 7000);
+  // Helper to format date
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000); // in seconds
+    
+    if (diff < 60) return 'Just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 172800) return 'Yesterday';
+    return date.toLocaleDateString();
   };
 
-  const getTypeIcon = (type: NotificationItem["type"]) => {
-    switch (type) {
-      case "order":
-        return <Package className="w-4 h-4 text-[#1E4E70]" />;
-      case "pickup":
-        return <Flame className="w-4 h-4 text-emerald-700" />;
-      case "earnings":
-        return <Banknote className="w-4 h-4 text-amber-700" />;
-      case "system":
-        return <ShieldCheck className="w-4 h-4 text-purple-700" />;
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/notifications');
+      if (res.data?.success) {
+        setNotifications(res.data.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="space-y-5 pb-16 font-sans max-w-2xl mx-auto lg:max-w-none lg:mx-0 animate-fadeIn relative">
-      
-      {/* iPhone Dynamic Island Floating Push Banner - Light Blue Theme */}
-      {showPushBanner && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[9999] w-[92%] max-w-[380px] bg-[#F0F8FF]/95 text-slate-900 backdrop-blur-2xl p-4 rounded-[28px] shadow-xl border border-[#A5D8FF] ring-1 ring-slate-900/5 animate-iosFloat space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-lg bg-[#1E4E70] text-white flex items-center justify-center font-bold shadow-xs">
-                <HeartPulse className="w-3.5 h-3.5 text-[#A5D8FF]" />
-              </div>
-              <span className="text-[11px] font-bold text-[#1E4E70] tracking-wider uppercase">
-                MONCRADEL
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-500 font-medium">Just Now</span>
-              <button
-                onClick={() => setShowPushBanner(false)}
-                className="p-1 rounded-full hover:bg-slate-200/60 text-slate-400 hover:text-slate-700 cursor-pointer transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
+  useEffect(() => {
+    setMounted(true);
+    fetchNotifications();
+  }, []);
 
-          <div className="space-y-1 px-1">
-            <h4 className="font-bold text-xs text-slate-900">
-              New Express Order #ORD-9935
-            </h4>
-            <p className="text-[11px] text-slate-600 font-normal leading-relaxed">
-              Priya Mehta & Baby Aarav • 2.4 km • ₹165.00 Payout
+  const markAsRead = async (id: string) => {
+    try {
+      // Optimistic update
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+      await api.patch(`/notifications/${id}/read`);
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
+      // Revert if failed
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: false } : n));
+    }
+  };
+
+  const markAllAsRead = async () => {
+    const unreadNotifications = notifications.filter(n => !n.isRead);
+    if (unreadNotifications.length === 0) return;
+
+    try {
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      // Call read for all unread (since there's no backend endpoint for read-all)
+      await Promise.all(unreadNotifications.map(n => 
+        api.patch(`/notifications/${n._id}/read`)
+      ));
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+      fetchNotifications(); // Reload to fix state
+    }
+  };
+
+  const deleteNotification = (id: string) => {
+    Swal.fire({
+      title: 'Delete this notification?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#1E4E70',
+      cancelButtonColor: '#f43f5e',
+      confirmButtonText: 'Yes, delete it',
+      cancelButtonText: 'Cancel',
+      backdrop: 'rgba(15, 23, 42, 0.4)',
+      customClass: {
+        popup: 'rounded-2xl',
+        title: 'text-lg font-semibold text-slate-800',
+        confirmButton: 'rounded-lg font-medium shadow-sm',
+        cancelButton: 'rounded-lg font-medium',
+        container: 'backdrop-blur-sm'
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await api.delete(`/notifications/${id}`);
+          setNotifications(prev => prev.filter(n => n._id !== id));
+          if (selectedNotification?._id === id) {
+             setSelectedNotification(null);
+          }
+          Swal.fire({
+            title: 'Deleted!',
+            text: 'Notification has been deleted.',
+            icon: 'success',
+            confirmButtonColor: '#1E4E70',
+            backdrop: 'rgba(15, 23, 42, 0.4)',
+            customClass: {
+              popup: 'rounded-2xl',
+              confirmButton: 'rounded-lg font-medium shadow-sm',
+              container: 'backdrop-blur-sm'
+            }
+          });
+        } catch (error) {
+           Swal.fire('Error', 'Failed to delete notification', 'error');
+        }
+      }
+    });
+  };
+
+  const handleClearAll = () => {
+    if (notifications.length === 0) return;
+    
+    Swal.fire({
+      title: 'Clear all notifications?',
+      text: "You won't be able to revert this action!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#1E4E70',
+      cancelButtonColor: '#f43f5e',
+      confirmButtonText: 'Yes, clear all',
+      cancelButtonText: 'Cancel',
+      backdrop: 'rgba(15, 23, 42, 0.4)',
+      customClass: {
+        popup: 'rounded-2xl',
+        title: 'text-lg font-semibold text-slate-800',
+        confirmButton: 'rounded-lg font-medium shadow-sm',
+        cancelButton: 'rounded-lg font-medium',
+        container: 'backdrop-blur-sm'
+      }
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setLoading(true);
+          await Promise.all(notifications.map(n => 
+             api.delete(`/notifications/${n._id}`)
+          ));
+          setNotifications([]);
+          Swal.fire({
+            title: 'Cleared!',
+            text: 'Your notifications have been cleared.',
+            icon: 'success',
+            confirmButtonColor: '#1E4E70',
+            backdrop: 'rgba(15, 23, 42, 0.4)',
+            customClass: {
+              popup: 'rounded-2xl',
+              confirmButton: 'rounded-lg font-medium shadow-sm',
+              container: 'backdrop-blur-sm'
+            }
+          });
+        } catch (error) {
+           Swal.fire('Error', 'Failed to clear all notifications', 'error');
+           fetchNotifications();
+        } finally {
+           setLoading(false);
+        }
+      }
+    });
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  return (
+    <div className="space-y-6 animate-fadeIn pb-16 max-w-2xl mx-auto lg:max-w-none lg:mx-0 font-sans">
+      
+      {/* Header Section */}
+      <div className="flex flex-row items-center justify-between gap-1 sm:gap-4 animate-fade-in-up">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-[18px] sm:text-3xl font-medium text-slate-900 tracking-tight mb-0 sm:mb-1">
+              Notifications
+            </h1>
+            {unreadCount > 0 && (
+              <span className="inline-block bg-[#1E4E70]/10 text-[#1E4E70] text-[11px] sm:text-[13px] font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full whitespace-nowrap">
+                {unreadCount} Unread
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-slate-700 font-medium hidden md:block">
+              Real-time updates for your deliveries
             </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2 pt-1">
-            <Link
-              href="/orders"
-              onClick={() => setShowPushBanner(false)}
-              className="flex-1 bg-[#1E4E70] hover:bg-[#153852] text-white font-semibold text-xs py-2.5 rounded-xl text-center shadow-xs transition-all flex items-center justify-center gap-1 active:scale-95 cursor-pointer"
+        <div className="flex items-center justify-end gap-1 sm:gap-2 shrink-0">
+          <button
+            onClick={markAllAsRead}
+            disabled={loading || notifications.length === 0}
+            className="bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 text-slate-700 text-[12px] sm:text-[13px] font-medium px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap"
+            title="Mark All Read"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1E4E70] shrink-0" />
+            <span>Mark All Read</span>
+          </button>
+          <button
+            onClick={handleClearAll}
+            disabled={loading || notifications.length === 0}
+            className="bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-rose-50 text-rose-600 font-medium w-8 h-8 sm:w-10 sm:h-[38px] rounded-lg border border-slate-200 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+            title="Clear All Notifications"
+          >
+            <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Notifications List Grid */}
+      {loading ? (
+        <div className="flex justify-center items-center py-20 animate-fade-in-up">
+          <Loader2 className="w-8 h-8 text-[#1E4E70] animate-spin" />
+        </div>
+      ) : notifications.length === 0 ? (
+        <div className="sm:bg-white sm:rounded-lg py-16 sm:p-12 text-center sm:border sm:border-slate-200/80 space-y-3 animate-fade-in-up" style={{ animationDelay: '100ms', opacity: 0, animationFillMode: 'forwards' }}>
+          <Bell className="w-10 h-10 text-slate-300 mx-auto" />
+          <h3 className="text-[17px] font-medium text-slate-900">No Notifications</h3>
+          <p className="text-[14px] text-slate-500 font-medium max-w-sm mx-auto mt-2">
+            You're all caught up! No new alerts at the moment.
+          </p>
+        </div>
+      ) : (
+        <div className="-mx-4 sm:mx-0 sm:bg-white sm:rounded-lg sm:border border-slate-200/80 overflow-hidden divide-y divide-slate-100 animate-fade-in-up" style={{ animationDelay: '100ms', opacity: 0, animationFillMode: 'forwards' }}>
+          {notifications.map((n) => (
+            <div
+              key={n._id}
+              onClick={() => {
+                setSelectedNotification(n);
+                if (!n.isRead) {
+                  markAsRead(n._id);
+                }
+              }}
+              className={`group px-4 py-5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors cursor-pointer ${
+                !n.isRead ? "bg-[#1E4E70]/5 sm:hover:bg-[#1E4E70]/10" : "bg-white sm:hover:bg-slate-50/60"
+              }`}
             >
-              <span>Accept & View Task</span>
-              <ChevronRight className="w-4 h-4 text-[#A5D8FF]" />
-            </Link>
-            <button
-              onClick={() => setShowPushBanner(false)}
-              className="bg-white hover:bg-slate-100 text-slate-600 font-medium text-xs py-2.5 px-4 rounded-xl border border-slate-200 transition-all cursor-pointer shadow-2xs"
-            >
-              Dismiss
-            </button>
-          </div>
+              <div className="flex items-start gap-4 min-w-0 w-full">
+                <div className="pt-0.5 sm:pt-1 text-[#1E4E70] shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                </div>
+
+                <div className="min-w-0 w-full flex flex-col gap-1 mt-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h3 className="font-medium text-slate-900 text-[15px] sm:text-[16px] leading-tight truncate">
+                        {n.title}
+                      </h3>
+                      {!n.isRead && (
+                        <span className="w-2 h-2 rounded-full bg-[#1E4E70] shrink-0" />
+                      )}
+                    </div>
+                    <span className="text-[13px] font-medium text-slate-500 whitespace-nowrap shrink-0 mt-0.5">
+                      {formatTime(n.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-[12px] sm:text-[13px] text-slate-700 font-medium leading-relaxed pr-2 sm:pr-8">
+                    {n.message}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Action Bar with Filter Tabs & Preview Banner Trigger */}
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {[
-            { key: "all", label: `All (${notifications.length})` },
-            { key: "order", label: "Orders" },
-            { key: "pickup", label: "Pickups" },
-            { key: "earnings", label: "Payouts" },
-            { key: "system", label: "System" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveFilter(tab.key as any)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
-                activeFilter === tab.key
-                  ? "bg-[#1E4E70] text-white shadow-xs"
-                  : "bg-white text-slate-600 border border-slate-200/60 hover:bg-slate-50"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <button
-          onClick={handleTriggerPushBanner}
-          className="text-xs font-medium text-[#1E4E70] bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer border border-slate-200 shrink-0 whitespace-nowrap"
-        >
-          Preview Banner
-        </button>
-      </div>
-
-      {/* Single Unified Clean List Container (Flat layout, NO redundant nested boxes) */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
-        {filteredNotifications.length > 0 ? (
-          filteredNotifications.map((item) => (
-            <div
-              key={item.id}
-              onClick={() =>
-                setNotifications((prev) =>
-                  prev.map((n) => (n.id === item.id ? { ...n, isRead: true } : n))
-                )
-              }
-              className={`p-4 transition-colors cursor-pointer flex items-start gap-3 hover:bg-slate-50 ${
-                !item.isRead ? "bg-slate-50/70" : ""
-              }`}
-            >
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5">
-                {getTypeIcon(item.type)}
-              </div>
-
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-900 text-xs">
-                    {item.title}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    {item.time}
-                  </span>
+      {/* Notification Details Modal */}
+      {mounted && selectedNotification && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/40 transition-opacity" 
+            style={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+            onClick={() => setSelectedNotification(null)}
+          />
+          <div className="relative bg-white w-full sm:max-w-md h-auto max-h-[85vh] overflow-hidden animate-slide-up shadow-2xl rounded-t-2xl sm:rounded-2xl pointer-events-auto flex flex-col font-sans">
+            <div className="flex items-center justify-between px-6 py-4 bg-white/50 backdrop-blur-sm border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="bg-[#1E4E70]/10 p-2 rounded-xl text-[#1E4E70]">
+                   <Bell className="w-5 h-5" />
                 </div>
-
-                <p className="text-xs text-slate-600 font-normal leading-relaxed">
-                  {item.text}
-                </p>
-
-                {item.actionLink && (
-                  <div className="pt-0.5">
-                    <Link
-                      href={item.actionLink}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#1E4E70] hover:underline"
-                    >
-                      <span>{item.actionText}</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  </div>
-                )}
+                <div>
+                  <h3 className="font-medium text-slate-900 leading-tight">Notification Details</h3>
+                  <span className="text-[12px] font-medium text-slate-500">{formatTime(selectedNotification.createdAt)}</span>
+                </div>
               </div>
+              <button
+                onClick={() => setSelectedNotification(null)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-          ))
-        ) : (
-          <div className="p-8 text-center text-xs text-slate-400 font-normal">
-            No alerts found.
-          </div>
-        )}
-      </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <h4 className="text-[16px] font-medium text-black mb-3">{selectedNotification.title}</h4>
+              <p className="text-[13px] text-slate-700 leading-relaxed">
+                {selectedNotification.message}
+              </p>
+            </div>
 
+            <div className="p-4 bg-white border-t border-slate-50">
+               <button 
+                 onClick={() => deleteNotification(selectedNotification._id)}
+                 className="w-full text-center text-rose-500 hover:text-rose-600 font-medium text-[14px] py-2 transition-colors flex justify-center items-center gap-2"
+               >
+                 <Trash2 className="w-4 h-4" /> Delete Notification
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
