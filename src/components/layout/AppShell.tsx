@@ -5,6 +5,8 @@ import DesktopHeader from "./DesktopHeader";
 import MobileHeader from "./MobileHeader";
 import MobileBottomNav from "./MobileBottomNav";
 import Sidebar from "./Sidebar";
+import { requestForToken, setupMessageListener } from "@/lib/firebase";
+import toast, { Toaster } from "react-hot-toast";
 interface AppShellProps {
   children: React.ReactNode;
 }
@@ -30,6 +32,49 @@ export default function AppShell({ children }: AppShellProps) {
       window.removeEventListener("moncradel-logout", checkAuth);
     };
   }, []);
+
+  useEffect(() => {
+    if (isLoggedIn && typeof window !== "undefined" && 'Notification' in window && Notification.permission !== 'denied') {
+      requestForToken().then(fcmToken => {
+        if (fcmToken) {
+          const token = localStorage.getItem("moncradel_rider_token");
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+          if (token) {
+            fetch(`${apiUrl}/users/profile`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ fcmToken }),
+            }).catch(console.error);
+          }
+        }
+      });
+      
+      setupMessageListener((payload) => {
+        const title = payload?.notification?.title || "New Notification";
+        const options = {
+          body: payload?.notification?.body || "",
+          icon: '/logo.png', // or any appropriate icon path
+        };
+
+        // Show native browser notification even when app is open
+        if ('Notification' in window && Notification.permission === 'granted') {
+          const notification = new Notification(title, options);
+          
+          notification.onclick = function() {
+            window.focus();
+            window.location.href = '/notifications';
+            this.close();
+          };
+        }
+        
+        // We can also trigger a custom event if we want the notification bell to update
+        window.dispatchEvent(new Event("moncradel-new-notification"));
+      });
+    }
+  }, [isLoggedIn]);
 
   if (!isMounted) {
     return null;
@@ -71,6 +116,7 @@ export default function AppShell({ children }: AppShellProps) {
 
         {/* Mobile & Tablet Bottom Navigation Bar */}
         <MobileBottomNav />
+        <Toaster position="top-center" />
       </div>
     </>
   );
