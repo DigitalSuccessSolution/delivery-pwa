@@ -16,6 +16,9 @@ import {
   X,
   Loader2,
 } from "lucide-react";
+import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface DeliveryTask {
   id: string;
@@ -32,12 +35,33 @@ interface DeliveryTask {
 
 export default function OrdersPage() {
   const router = useRouter();
+  const isOnline = useSelector((state: RootState) => state.app.isOnline);
 
   const [tasks, setTasks] = useState<DeliveryTask[]>([]);
   const [activeTab, setActiveTab] = useState<
     "ready" | "out_for_delivery" | "delivered"
   >("ready");
   const [isLoading, setIsLoading] = useState(true);
+
+  const handleOfflineGuard = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (!isOnline) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'You are offline',
+        text: 'Please go online to view and manage orders.',
+        confirmButtonColor: '#1E4E70',
+        customClass: {
+          popup: 'rounded-2xl',
+        }
+      });
+      return false;
+    }
+    return true;
+  };
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -84,7 +108,8 @@ export default function OrdersPage() {
 
   const filteredTasks = tasks.filter((t) => t.status === activeTab);
 
-  const handlePickup = async (id: string) => {
+  const handlePickup = async (id: string, e: React.MouseEvent) => {
+    if (!handleOfflineGuard(e)) return;
     try {
       const token = localStorage.getItem("moncradel_rider_token");
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -223,7 +248,10 @@ export default function OrdersPage() {
             filteredTasks.map((order) => (
               <div
                 key={order.id}
-                onClick={() => router.push(`/orders/${order.id}`)}
+                onClick={(e) => {
+                  if (!handleOfflineGuard(e)) return;
+                  router.push(`/orders/${order.id}`);
+                }}
                 className="bg-white rounded-xl border border-slate-100 p-4 sm:p-5 hover:border-slate-200 transition-colors flex flex-col gap-3 cursor-pointer"
               >
                 {/* Header: Order ID & Distance */}
@@ -287,7 +315,7 @@ export default function OrdersPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handlePickup(order.id);
+                          handlePickup(order.id, e);
                         }}
                         className="w-full bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
                       >

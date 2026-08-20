@@ -19,28 +19,39 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regOtp, setRegOtp] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regEmail || !regName || !regPhone || !regPassword || !regConfirmPassword) {
-      setErrorMsg("Please fill in all fields.");
-      return;
+    
+    const errors: { [key: string]: string } = {};
+    if (!regName) errors.name = "Full Name is required";
+    if (!regPhone) {
+      errors.phone = "Phone number is required";
+    } else if (regPhone.length !== 10 || !/^\d{10}$/.test(regPhone)) {
+      errors.phone = "Enter a valid 10-digit number";
     }
     
-    if (regPhone.length !== 10 || !/^\d{10}$/.test(regPhone)) {
-      setErrorMsg("Please enter a valid 10-digit phone number.");
-      return;
+    if (!regEmail) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) {
+      errors.email = "Invalid email format";
     }
 
-    if (regPassword.length < 6) {
-      setErrorMsg("Password must be at least 6 characters long.");
-      return;
+    if (!regPassword) {
+      errors.password = "Password is required";
+    } else if (regPassword.length < 6) {
+      errors.password = "Must be at least 6 characters";
     }
 
-    if (regPassword !== regConfirmPassword) {
-      setErrorMsg("Passwords do not match.");
-      return;
+    if (!regConfirmPassword) {
+      errors.confirmPassword = "Confirm password is required";
+    } else if (regPassword !== regConfirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
     }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
     
     setIsLoading(true);
     setErrorMsg("");
@@ -102,7 +113,7 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#F8F9FA] relative px-6 py-6 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] w-full bg-[#F8F9FA] relative px-4 py-6 overflow-hidden font-sans">
       <div className="w-full flex flex-col h-full max-w-sm mx-auto">
         
         {/* Spacer above logo */}
@@ -157,11 +168,17 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       type="text"
                       required
                       value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
-                      className="w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                        setRegName(val);
+                      }}
+                      className={`w-full pl-10 pr-3 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                        fieldErrors.name ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                      }`}
                       placeholder="John Doe"
                     />
                   </div>
+                  {fieldErrors.name && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.name}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -174,11 +191,17 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       type="tel"
                       required
                       value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      className="w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        setRegPhone(val);
+                      }}
+                      className={`w-full pl-10 pr-3 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                        fieldErrors.phone ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                      }`}
                       placeholder="9876543210"
                     />
                   </div>
+                  {fieldErrors.phone && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.phone}</p>}
                 </div>
               </div>
 
@@ -193,11 +216,17 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                     type="email"
                     required
                     value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\s/g, '');
+                      setRegEmail(val);
+                    }}
+                    className={`w-full pl-11 pr-4 py-3 bg-white border rounded-[14px] text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                      fieldErrors.email ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                    }`}
                     placeholder="rider@moncradel.com"
                   />
                 </div>
+                {fieldErrors.email && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.email}</p>}
               </div>
 
               {/* Password & Confirm */}
@@ -213,7 +242,9 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       required
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full pl-10 pr-9 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                      className={`w-full pl-10 pr-9 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                        fieldErrors.password ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                      }`}
                       placeholder="Password"
                     />
                     <button 
@@ -224,6 +255,7 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       {showPassword ? <EyeOff className="h-4 w-4" strokeWidth={2} /> : <Eye className="h-4 w-4" strokeWidth={2} />}
                     </button>
                   </div>
+                  {fieldErrors.password && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.password}</p>}
                 </div>
 
                 <div className="space-y-1.5">
@@ -237,10 +269,13 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       required
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
-                      className="w-full pl-10 pr-3 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                      className={`w-full pl-10 pr-3 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                        fieldErrors.confirmPassword ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                      }`}
                       placeholder="Confirm"
                     />
                   </div>
+                  {fieldErrors.confirmPassword && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.confirmPassword}</p>}
                 </div>
               </div>
 

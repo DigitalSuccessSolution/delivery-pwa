@@ -14,9 +14,13 @@ import {
   MessageSquare,
   Loader2
 } from "lucide-react";
+import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 export default function OrderDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const isOnline = useSelector((state: RootState) => state.app.isOnline);
   const resolvedParams = use(params);
   
   const [order, setOrder] = useState<any>(null);
@@ -52,8 +56,38 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   }, [resolvedParams.id]);
 
   useEffect(() => {
+    if (!isOnline) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Offline Mode',
+        text: 'You must be online to view and manage order details.',
+        confirmButtonColor: '#1E4E70',
+        customClass: {
+          popup: 'rounded-2xl',
+        }
+      }).then(() => {
+        router.push('/orders');
+      });
+      return;
+    }
     fetchOrder();
-  }, [fetchOrder]);
+  }, [fetchOrder, isOnline, router]);
+
+  const handleOfflineGuard = () => {
+    if (!isOnline) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'You are offline',
+        text: 'Please go online to manage orders.',
+        confirmButtonColor: '#1E4E70',
+        customClass: {
+          popup: 'rounded-2xl',
+        }
+      });
+      return false;
+    }
+    return true;
+  };
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(-1);
@@ -68,6 +102,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   };
 
   const handlePickup = async () => {
+    if (!handleOfflineGuard()) return;
     if (!order) return;
     try {
       setIsSubmitting(true);
@@ -97,6 +132,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   };
 
   const handleCompleteDelivery = async () => {
+    if (!handleOfflineGuard()) return;
     if (!order) return;
     
     const enteredOtp = otp.join("");

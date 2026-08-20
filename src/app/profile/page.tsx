@@ -140,6 +140,7 @@ export default function ProfilePage() {
         if (fileResult.user) {
           localStorage.setItem("moncradel_rider_user", JSON.stringify(fileResult.user));
           setAvatar(fileResult.user.avatar);
+          window.dispatchEvent(new Event("moncradel-profile-updated"));
         }
 
         const Toast = Swal.mixin({
@@ -203,6 +204,7 @@ export default function ProfilePage() {
       // Update local user cache with jsonResult
       if (jsonResult.user) {
         localStorage.setItem("moncradel_rider_user", JSON.stringify(jsonResult.user));
+        window.dispatchEvent(new Event("moncradel-profile-updated"));
       }
 
       const Toast = Swal.mixin({

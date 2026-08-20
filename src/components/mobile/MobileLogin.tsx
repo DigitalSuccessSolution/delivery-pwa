@@ -15,12 +15,26 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
   const [loginPassword, setLoginPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) return;
     
+    const errors: { [key: string]: string } = {};
+    if (!loginEmail) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) {
+      errors.email = "Invalid email format";
+    }
+    
+    if (!loginPassword) {
+      errors.password = "Password is required";
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setIsLoading(true);
     setErrorMsg("");
     
@@ -66,7 +80,7 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#F8F9FA] relative px-6 py-6 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] w-full bg-[#F8F9FA] relative px-4 py-6 overflow-hidden font-sans">
       <div className="w-full flex flex-col h-full max-w-sm mx-auto">
         
         {/* Spacer above logo */}
@@ -115,11 +129,17 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
                   type="email"
                   required
                   value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\s/g, '');
+                    setLoginEmail(val);
+                  }}
+                  className={`w-full pl-10 pr-4 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                    fieldErrors.email ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                  }`}
                   placeholder="Enter your email"
                 />
               </div>
+              {fieldErrors.email && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.email}</p>}
             </div>
 
             {/* Password */}
@@ -134,7 +154,9 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
                   required
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-1 focus:ring-[#1E4E70] focus:border-[#1E4E70] transition-all"
+                  className={`w-full pl-10 pr-10 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                    fieldErrors.password ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                  }`}
                   placeholder="Enter your password"
                 />
                 <button 
@@ -145,6 +167,7 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
                   {showPassword ? <EyeOff className="h-4 w-4" strokeWidth={2} /> : <Eye className="h-4 w-4" strokeWidth={2} />}
                 </button>
               </div>
+              {fieldErrors.password && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.password}</p>}
               
               <div className="flex justify-end pt-1">
                 <button 

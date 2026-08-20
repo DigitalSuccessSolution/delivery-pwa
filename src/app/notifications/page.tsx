@@ -11,18 +11,14 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 
-interface NotificationItem {
-  _id: string;
-  title: string;
-  message: string;
-  createdAt: string;
-  isRead: boolean;
-}
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { fetchNotifications, markAsRead, deleteNotification, NotificationItem } from "@/store/slices/notificationSlice";
 
 export default function NotificationsPage() {
   const [mounted, setMounted] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: notifications, loading } = useSelector((state: RootState) => state.notifications);
   const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null);
 
   // Helper to format date
@@ -38,35 +34,17 @@ export default function NotificationsPage() {
     return date.toLocaleDateString();
   };
 
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get('/notifications');
-      if (res.data?.success) {
-        setNotifications(res.data.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleFetchNotifications = () => {
+    dispatch(fetchNotifications());
   };
 
   useEffect(() => {
     setMounted(true);
-    fetchNotifications();
-  }, []);
+    dispatch(fetchNotifications());
+  }, [dispatch]);
 
-  const markAsRead = async (id: string) => {
-    try {
-      // Optimistic update
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
-      await api.patch(`/notifications/${id}/read`);
-    } catch (error) {
-      console.error("Failed to mark as read:", error);
-      // Revert if failed
-      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: false } : n));
-    }
+  const handleMarkAsRead = async (id: string) => {
+    dispatch(markAsRead(id));
   };
 
   const markAllAsRead = async () => {
@@ -74,18 +52,17 @@ export default function NotificationsPage() {
     if (unreadNotifications.length === 0) return;
 
     try {
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      // Call read for all unread (since there's no backend endpoint for read-all)
+      // Dispatch individually for now
       await Promise.all(unreadNotifications.map(n => 
-        api.patch(`/notifications/${n._id}/read`)
+        dispatch(markAsRead(n._id)).unwrap()
       ));
     } catch (error) {
       console.error("Failed to mark all as read:", error);
-      fetchNotifications(); // Reload to fix state
+      dispatch(fetchNotifications()); // Reload to fix state
     }
   };
 
-  const deleteNotification = (id: string) => {
+  const handleDeleteNotification = (id: string) => {
     Swal.fire({
       title: 'Delete this notification?',
       text: "You won't be able to revert this!",
@@ -106,8 +83,7 @@ export default function NotificationsPage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await api.delete(`/notifications/${id}`);
-          setNotifications(prev => prev.filter(n => n._id !== id));
+          await dispatch(deleteNotification(id)).unwrap();
           if (selectedNotification?._id === id) {
              setSelectedNotification(null);
           }
@@ -153,11 +129,9 @@ export default function NotificationsPage() {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          setLoading(true);
           await Promise.all(notifications.map(n => 
-             api.delete(`/notifications/${n._id}`)
+             dispatch(deleteNotification(n._id)).unwrap()
           ));
-          setNotifications([]);
           Swal.fire({
             title: 'Cleared!',
             text: 'Your notifications have been cleared.',
@@ -172,9 +146,7 @@ export default function NotificationsPage() {
           });
         } catch (error) {
            Swal.fire('Error', 'Failed to clear all notifications', 'error');
-           fetchNotifications();
-        } finally {
-           setLoading(false);
+           dispatch(fetchNotifications());
         }
       }
     });
@@ -247,7 +219,7 @@ export default function NotificationsPage() {
               onClick={() => {
                 setSelectedNotification(n);
                 if (!n.isRead) {
-                  markAsRead(n._id);
+                  handleMarkAsRead(n._id);
                 }
               }}
               className={`group px-4 py-5 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors cursor-pointer ${
@@ -321,7 +293,7 @@ export default function NotificationsPage() {
 
             <div className="p-4 bg-white border-t border-slate-50">
                <button 
-                 onClick={() => deleteNotification(selectedNotification._id)}
+                 onClick={() => handleDeleteNotification(selectedNotification._id)}
                  className="w-full text-center text-rose-500 hover:text-rose-600 font-medium text-[14px] py-2 transition-colors flex justify-center items-center gap-2"
                >
                  <Trash2 className="w-4 h-4" /> Delete Notification

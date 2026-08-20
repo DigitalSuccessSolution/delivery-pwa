@@ -3,19 +3,39 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Phone, ArrowLeft } from "lucide-react";
+import { Bell, ArrowLeft, Bike, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
-import { INITIAL_NOTIFICATIONS } from "@/data/mockData";
+import { createPortal } from "react-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
+import { fetchNotifications } from "@/store/slices/notificationSlice";
+import { setOnlineStatus } from "@/store/slices/appSlice";
 
 export default function MobileHeader() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [notifications] = useState(INITIAL_NOTIFICATIONS);
-  const unreadCount = notifications.length;
+  const dispatch = useDispatch<AppDispatch>();
+  const unreadCount = useSelector((state: RootState) => state.notifications.unreadCount);
+  const isOnline = useSelector((state: RootState) => state.app.isOnline);
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [fullName, setFullName] = useState("Rider");
   const [avatar, setAvatar] = useState("/delivery_boy_hero.png");
+  const [greeting, setGreeting] = useState("Good Morning");
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting("Good Morning");
+    else if (hour < 17) setGreeting("Good Afternoon");
+    else setGreeting("Good Evening");
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      dispatch(fetchNotifications());
+    }
+  }, [dispatch, isLoggedIn]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -28,20 +48,32 @@ export default function MobileHeader() {
         if (savedUser) {
           try {
             const parsed = JSON.parse(savedUser);
+            if (parsed.name) setFullName(parsed.name);
             if (parsed.avatar) setAvatar(parsed.avatar);
           } catch(e) {}
         }
       };
       
       checkAuth();
+      
+      const handleStorage = () => {
+        checkAuth();
+        const status = localStorage.getItem("moncradel_rider_online");
+        if (status !== null) {
+          dispatch(setOnlineStatus(status === "true"));
+        }
+      };
+      
       window.addEventListener("moncradel-login", checkAuth);
       window.addEventListener("moncradel-logout", checkAuth);
-      window.addEventListener("storage", checkAuth);
+      window.addEventListener("storage", handleStorage);
+      window.addEventListener("moncradel-profile-updated", checkAuth);
       
       return () => {
         window.removeEventListener("moncradel-login", checkAuth);
         window.removeEventListener("moncradel-logout", checkAuth);
-        window.removeEventListener("storage", checkAuth);
+        window.removeEventListener("storage", handleStorage);
+        window.removeEventListener("moncradel-profile-updated", checkAuth);
       };
     }
   }, []);
@@ -90,51 +122,48 @@ export default function MobileHeader() {
 
   // MAIN TAB HEADER (Mobile)
   return (
-    <header className="md:hidden sticky top-0 z-30 bg-[#F8F9FA]/90 backdrop-blur-md border-b border-slate-200/60 px-4 py-3 transition-all w-full">
-      <div className="flex items-center justify-between gap-4">
-        {/* Left: Rider Avatar & Status */}
-        <div className="flex items-center gap-3">
-          <Link href="/account" className="relative">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm ring-2 ring-[#A5D8FF] bg-slate-100">
+    <header className="md:hidden sticky top-0 z-30 bg-white border-b border-slate-100 px-4 py-3.5 transition-all w-full">
+      <div className="flex items-center justify-between">
+        
+        {/* Left: Profile & Name */}
+        <div className="flex items-center gap-3.5">
+          <Link href="/profile" className="relative cursor-pointer block active:scale-95 transition-transform shrink-0">
+            <div className="w-[46px] h-[46px] rounded-full overflow-hidden bg-slate-100 border border-slate-200">
               <Image
                 src={avatar}
-                alt="Rider"
-                width={40}
-                height={40}
+                alt="Rider Profile"
+                width={46}
+                height={46}
                 className="object-cover w-full h-full"
               />
             </div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#B2F2BB] border-2 border-white rounded-full"></span>
+            {isOnline && (
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+            )}
           </Link>
-          <div>
-            <h2 className="font-semibold text-[#1E4E70] text-sm leading-tight">
-              Active Shift
-            </h2>
-            <p className="text-[11px] font-medium text-emerald-600">
-              ● Online
+          <div className="flex flex-col">
+            <p className="text-[13px] font-medium text-slate-500 mb-0.5">
+              {greeting}, 👋
             </p>
+            <h2 className="font-medium text-slate-900 text-[17px] leading-none tracking-tight truncate max-w-[150px]">
+              {fullName}
+            </h2>
           </div>
         </div>
 
         {/* Right: Actions */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => alert("Connecting to Dispatch...")}
-            className="flex items-center justify-center bg-rose-50 text-rose-600 w-9 h-9 rounded-full border border-rose-100 transition-colors"
-          >
-            <Phone className="w-4 h-4" />
-          </button>
-
-          <Link
-            href="/notifications"
-            className="relative p-2 text-slate-500 hover:bg-slate-100 rounded-full transition-colors flex items-center justify-center"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
-            )}
-          </Link>
-        </div>
+        <Link
+          href="/notifications"
+          className="relative p-2 text-slate-700 hover:bg-slate-50 rounded-full transition-colors flex items-center justify-center cursor-pointer -mr-2"
+        >
+          <Bell className="w-6 h-6 stroke-[1.5]" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-white px-1">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          )}
+        </Link>
+        
       </div>
     </header>
   );

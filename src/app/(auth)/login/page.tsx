@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
   // Redirect if already logged in
@@ -26,7 +27,20 @@ export default function LoginPage() {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) return;
+
+    const errors: { [key: string]: string } = {};
+    if (!loginEmail) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) {
+      errors.email = "Invalid email format";
+    }
+    
+    if (!loginPassword) {
+      errors.password = "Password is required";
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     setIsLoading(true);
     setErrorMsg("");
@@ -173,11 +187,17 @@ export default function LoginPage() {
                       type="email"
                       required
                       value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70] transition-all"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\s/g, '');
+                        setLoginEmail(val);
+                      }}
+                      className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                        fieldErrors.email ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                      }`}
                       placeholder="e.g., rider@moncradel.com"
                     />
                   </div>
+                  {fieldErrors.email && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.email}</p>}
                 </div>
 
                 <div className="space-y-1">
@@ -191,7 +211,9 @@ export default function LoginPage() {
                       required
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70] transition-all"
+                      className={`w-full pl-10 pr-10 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                        fieldErrors.password ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                      }`}
                       placeholder="Enter your secure password"
                     />
                     <div
@@ -205,6 +227,7 @@ export default function LoginPage() {
                       )}
                     </div>
                   </div>
+                  {fieldErrors.password && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.password}</p>}
                 </div>
 
                 <div className="flex items-center justify-end pt-0.5">

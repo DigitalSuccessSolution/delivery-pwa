@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [regStep, setRegStep] = useState<1 | 2>(1);
   const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
   const [regEmail, setRegEmail] = useState("");
@@ -32,25 +33,35 @@ export default function RegisterPage() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regEmail || !regName || !regPhone || !regPassword || !regConfirmPassword) {
-      setErrorMsg("Please fill in all fields.");
-      return;
+    
+    const errors: { [key: string]: string } = {};
+    if (!regName) errors.name = "Full Name is required";
+    if (!regPhone) {
+      errors.phone = "Phone number is required";
+    } else if (regPhone.length !== 10 || !/^\d{10}$/.test(regPhone)) {
+      errors.phone = "Enter a valid 10-digit number";
+    }
+    
+    if (!regEmail) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) {
+      errors.email = "Invalid email format";
     }
 
-    if (regPhone.length !== 10 || !/^\d{10}$/.test(regPhone)) {
-      setErrorMsg("Please enter a valid 10-digit phone number.");
-      return;
+    if (!regPassword) {
+      errors.password = "Password is required";
+    } else if (regPassword.length < 6) {
+      errors.password = "Must be at least 6 characters";
     }
 
-    if (regPassword.length < 6) {
-      setErrorMsg("Password must be at least 6 characters long.");
-      return;
+    if (!regConfirmPassword) {
+      errors.confirmPassword = "Confirm password is required";
+    } else if (regPassword !== regConfirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
     }
 
-    if (regPassword !== regConfirmPassword) {
-      setErrorMsg("Passwords do not match.");
-      return;
-    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     setIsLoading(true);
     setErrorMsg("");
@@ -212,11 +223,17 @@ export default function RegisterPage() {
                           type="text"
                           required
                           value={regName}
-                          onChange={(e) => setRegName(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70]"
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                            setRegName(val);
+                          }}
+                          className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                            fieldErrors.name ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                          }`}
                           placeholder="John Doe"
                         />
                       </div>
+                      {fieldErrors.name && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.name}</p>}
                     </div>
 
                     <div className="space-y-1">
@@ -229,11 +246,17 @@ export default function RegisterPage() {
                           type="tel"
                           required
                           value={regPhone}
-                          onChange={(e) => setRegPhone(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70]"
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setRegPhone(val);
+                          }}
+                          className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                            fieldErrors.phone ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                          }`}
                           placeholder="9876543210"
                         />
                       </div>
+                      {fieldErrors.phone && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.phone}</p>}
                     </div>
                   </div>
 
@@ -247,11 +270,17 @@ export default function RegisterPage() {
                         type="email"
                         required
                         value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70]"
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\s/g, '');
+                          setRegEmail(val);
+                        }}
+                        className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                          fieldErrors.email ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                        }`}
                         placeholder="rider@moncradel.com"
                       />
                     </div>
+                    {fieldErrors.email && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.email}</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -266,7 +295,9 @@ export default function RegisterPage() {
                           required
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
-                          className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70]"
+                          className={`w-full pl-10 pr-10 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                            fieldErrors.password ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                          }`}
                           placeholder="Password"
                         />
                         <button
@@ -281,6 +312,7 @@ export default function RegisterPage() {
                           )}
                         </button>
                       </div>
+                      {fieldErrors.password && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.password}</p>}
                     </div>
 
                     <div className="space-y-1">
@@ -294,7 +326,9 @@ export default function RegisterPage() {
                           required
                           value={regConfirmPassword}
                           onChange={(e) => setRegConfirmPassword(e.target.value)}
-                          className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70]"
+                          className={`w-full pl-10 pr-10 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                            fieldErrors.confirmPassword ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
+                          }`}
                           placeholder="Confirm"
                         />
                         <button
@@ -310,6 +344,7 @@ export default function RegisterPage() {
                         </button>
                       </div>
                     </div>
+                    {fieldErrors.password && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.password}</p>}
                   </div>
 
                   <button
@@ -337,7 +372,7 @@ export default function RegisterPage() {
                       maxLength={4}
                       value={regOtp}
                       onChange={(e) => setRegOtp(e.target.value.replace(/\D/g, ""))}
-                      className="w-full max-w-[200px] mx-auto block px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-2xl font-bold tracking-[0.5em] text-center focus:outline-none focus:ring-2 focus:ring-[#1E4E70]/20 focus:border-[#1E4E70]"
+                      className="w-full max-w-[200px] mx-auto block px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 text-2xl font-bold tracking-[0.5em] text-center focus:outline-none focus:ring-0 focus:border-[#A5D8FF]"
                       placeholder="0000"
                     />
                   </div>

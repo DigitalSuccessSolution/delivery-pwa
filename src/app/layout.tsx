@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import AppShell from "@/components/layout/AppShell";
+import ReduxProvider from "@/store/providers/ReduxProvider";
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
@@ -43,7 +44,9 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-[#F8F9FA] text-slate-800 antialiased font-sans selection:bg-[#A5D8FF] selection:text-[#1E4E70]"
         suppressHydrationWarning
       >
-        <AppShell>{children}</AppShell>
+        <ReduxProvider>
+          <AppShell>{children}</AppShell>
+        </ReduxProvider>
       </body>
     </html>
   );
