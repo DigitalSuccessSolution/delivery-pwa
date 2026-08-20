@@ -3,7 +3,7 @@ import withPWAInit from "@ducanh2912/next-pwa";
 
 const withPWA = withPWAInit({
   dest: "public",
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "production",
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
@@ -14,7 +14,7 @@ const withPWA = withPWAInit({
 
 const nextConfig: NextConfig = {
   // @ts-ignore
-   allowedDevOrigins: ["192.168.29.250"],
+  allowedDevOrigins: ["192.168.29.250"],
   images: {
     remotePatterns: [
       {
