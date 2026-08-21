@@ -88,6 +88,32 @@ export default function RegisterPage() {
     setIsLoading(false);
   };
 
+  const handleResendOtp = async () => {
+    if (!regEmail) return;
+
+    setIsLoading(true);
+    setErrorMsg("");
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${apiUrl}/auth/send-register-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: regEmail }),
+      });
+      const data = await res.json();
+
+      if (!data.success) {
+        setErrorMsg(data.message || "Failed to resend OTP.");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Error connecting to server.");
+    }
+
+    setIsLoading(false);
+  };
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regOtp) return;
@@ -389,6 +415,17 @@ export default function RegisterPage() {
                       </>
                     )}
                   </button>
+
+                  <div className="text-center mt-4">
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isLoading}
+                      className="text-[14px] font-medium text-slate-500 hover:text-[#1E4E70] transition-colors"
+                    >
+                      Didn't receive the code? <span className="font-semibold text-[#1E4E70]">Resend OTP</span>
+                    </button>
+                  </div>
                 </form>
               )}
 

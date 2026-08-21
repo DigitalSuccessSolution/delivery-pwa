@@ -76,6 +76,30 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
     setIsLoading(false);
   };
 
+  const handleResendOtp = async () => {
+    if (!regEmail) return;
+    
+    setIsLoading(true);
+    setErrorMsg("");
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+      const res = await fetch(`${apiUrl}/auth/send-register-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: regEmail }),
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        setErrorMsg(data.message || "Failed to resend OTP.");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Error connecting to server.");
+    }
+    setIsLoading(false);
+  };
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regOtp) return;
@@ -269,11 +293,18 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       required
                       value={regConfirmPassword}
                       onChange={(e) => setRegConfirmPassword(e.target.value)}
-                      className={`w-full pl-10 pr-3 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
+                      className={`w-full pl-10 pr-9 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
                         fieldErrors.confirmPassword ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
                       }`}
                       placeholder="Confirm"
                     />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" strokeWidth={2} /> : <Eye className="h-4 w-4" strokeWidth={2} />}
+                    </button>
                   </div>
                   {fieldErrors.confirmPassword && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.confirmPassword}</p>}
                 </div>
@@ -328,6 +359,17 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                   </>
                 )}
               </button>
+
+              <div className="text-center mt-3">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={isLoading}
+                  className="text-[13px] font-medium text-slate-500 hover:text-[#1E4E70] transition-colors"
+                >
+                  Didn't receive the code? <span className="font-semibold text-[#1E4E70]">Resend OTP</span>
+                </button>
+              </div>
             </form>
           )}
 
