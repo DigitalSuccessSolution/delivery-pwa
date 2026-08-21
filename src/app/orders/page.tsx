@@ -273,16 +273,16 @@ export default function OrdersPage() {
                   </p>
 
                   <div className="space-y-2.5">
-                    <div className="flex items-start gap-2.5 text-[13px] sm:text-[14px] text-black/80 font-medium">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></div>
-                      <span className="leading-snug flex-1">
+                    <div className="flex items-center gap-2.5 text-[13px] sm:text-[14px] text-black/80 font-medium overflow-hidden">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></div>
+                      <span className="flex-1 truncate">
                         <span className="font-medium text-black">Pickup: </span>{order.kitchenAddress}
                       </span>
                     </div>
 
-                    <div className="flex items-start gap-2.5 text-[13px] sm:text-[14px] text-black/80 font-medium">
-                      <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 shrink-0"></div>
-                      <span className="leading-snug flex-1">
+                    <div className="flex items-center gap-2.5 text-[13px] sm:text-[14px] text-black/80 font-medium overflow-hidden">
+                      <div className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></div>
+                      <span className="flex-1 truncate">
                         <span className="font-medium text-black">Drop: </span>{order.address}
                       </span>
                     </div>
@@ -317,7 +317,7 @@ export default function OrdersPage() {
                           e.stopPropagation();
                           handlePickup(order.id, e);
                         }}
-                        className="w-full bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                        className="w-full bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
                       >
                         <PackageCheck className="w-5 h-5" />
                         <span>Confirm Pickup</span>
@@ -329,7 +329,7 @@ export default function OrdersPage() {
                             e.stopPropagation();
                             router.push(`/map?orderId=${order.id}`);
                           }}
-                          className="w-1/2 bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                          className="w-1/2 bg-[#1E4E70] hover:bg-[#153852] text-white font-medium text-[14px] sm:text-[15px] py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
                         >
                           <Navigation className="w-4 h-4" />
                           <span>Map</span>
@@ -339,7 +339,7 @@ export default function OrdersPage() {
                             e.stopPropagation();
                             handleCompleteDelivery(order.id);
                           }}
-                          className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[14px] sm:text-[15px] py-3.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                          className="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-[14px] sm:text-[15px] py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
                         >
                           <ShieldCheck className="w-5 h-5" />
                           <span>Deliver</span>

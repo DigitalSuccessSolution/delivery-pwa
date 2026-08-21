@@ -254,25 +254,33 @@ export default function ProfilePage() {
   );
 
   return (
-    <div className="animate-fade-in-up pb-16 px-4 md:px-8 pt-4 md:pt-8 font-sans max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 lg:mb-8 pt-2">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="md:hidden p-2 -ml-2 rounded-full text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-medium text-black tracking-tight mb-1">
-              Partner Profile
-            </h1>
-            <p className="text-base text-black/80 font-medium hidden md:block">
-              Manage your personal details and vehicle credentials.
-            </p>
-          </div>
-        </div>
+    <div className="animate-fade-in-up pb-16 pt-0 md:pt-8 font-sans max-w-7xl mx-auto">
+      {/* Mobile Sticky Header (Visible only on Mobile) */}
+      <div className="md:hidden sticky top-0 z-40 bg-[#F8F9FA] flex items-center py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 mb-4">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-[#111827]"
+        >
+          <ChevronLeft className="w-6 h-6" />
+          <span className="text-[17px] sm:text-[18px] font-medium text-[#111827]">Partner Profile</span>
+        </button>
+      </div>
+
+      {/* Desktop Navigation (Visible only on Desktop) */}
+      <div className="hidden md:flex items-center mb-6 -ml-3 md:ml-0">
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-1 px-3 py-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-[#1E4E70] transition-colors"
+        >
+          <ChevronLeft className="w-6 h-6" />
+          <span className="font-semibold text-[15px]">Back</span>
+        </button>
+      </div>
+
+      {/* Desktop Page Header */}
+      <div className="hidden md:flex flex-col mb-4 px-1 lg:mb-8">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-gray-900">Partner Profile</h1>
+        <p className="text-sm md:text-base lg:text-lg text-gray-500 font-medium mt-1 lg:mt-2">Manage your personal details and vehicle credentials.</p>
       </div>
 
       {isLoading ? (

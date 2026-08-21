@@ -92,13 +92,13 @@ export default function AccountPage() {
     <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-white animate-fade-in font-sans w-full overflow-y-auto">
       
       {/* Top Section with Curved Background */}
-      <div className="relative w-full h-[180px] shrink-0 bg-[#1E4E70] rounded-b-[40px] overflow-hidden">
+      <div className="relative w-full h-[150px] shrink-0 bg-[#1E4E70] rounded-b-[40px] overflow-hidden">
         {/* Abstract shapes for background texture (optional, subtle) */}
         <div className="absolute top-[-50px] right-[-50px] w-[200px] h-[200px] bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-[-50px] left-[-20px] w-[150px] h-[150px] bg-white/5 rounded-full blur-xl"></div>
         
         {/* Header Content */}
-        <div className="absolute top-0 left-0 w-full px-5 py-6 flex items-center justify-center">
+        <div className="absolute top-0 left-0 w-full px-5 py-4 flex items-center justify-center">
           <button
             onClick={() => router.back()}
             className="absolute left-5 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-800 shadow-sm transition-transform active:scale-95"

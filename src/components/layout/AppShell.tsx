@@ -7,6 +7,7 @@ import MobileBottomNav from "./MobileBottomNav";
 import Sidebar from "./Sidebar";
 import { requestForToken, setupMessageListener } from "@/lib/firebase";
 import toast, { Toaster } from "react-hot-toast";
+import { usePathname } from "next/navigation";
 interface AppShellProps {
   children: React.ReactNode;
 }
@@ -14,6 +15,8 @@ interface AppShellProps {
 export default function AppShell({ children }: AppShellProps) {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
+  const pathname = usePathname();
+  const hideMobileHeader = pathname === "/notifications" || pathname === "/support" || pathname === "/profile" || pathname === "/terms" || pathname === "/privacy" || (pathname.startsWith("/orders/") && pathname !== "/orders");
 
   useEffect(() => {
     setIsMounted(true);
@@ -103,11 +106,11 @@ export default function AppShell({ children }: AppShellProps) {
           {/* Header — Fixed at top of content column */}
           <div className="shrink-0 z-30">
             <DesktopHeader />
-            <MobileHeader />
+            {!hideMobileHeader && <MobileHeader />}
           </div>
 
           {/* Main Content — ONLY this area scrolls */}
-          <main className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-8">
+          <main className={`flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-24 lg:pb-8 ${hideMobileHeader ? 'py-0' : 'py-6'}`}>
             <div className="max-w-7xl mx-auto w-full">
               {children}
             </div>

@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import { 
   PhoneCall, 
   MapPin, 
-  Navigation,
   ShieldCheck,
   AlertCircle,
   Camera,
   CheckCircle2,
   Package,
-  MessageSquare,
-  Loader2
+  Loader2,
+  ChevronLeft
 } from "lucide-react";
 import Swal from "sweetalert2";
 import { useSelector } from "react-redux";
@@ -213,8 +212,46 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   const allergies = order.babyId?.allergies || [];
 
   return (
-    <div className="w-full font-sans pb-24 pt-4 sm:pt-6 min-h-screen bg-slate-50/50 animate-fade-in-up">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    <div className="w-full font-sans pb-24 min-h-screen bg-[#F8F9FA] animate-fade-in-up">
+      <div className="w-full">
+        
+        {/* Mobile Sticky Header (Visible only on Mobile) */}
+        <div className="md:hidden sticky top-0 z-40 bg-[#F8F9FA] flex items-center justify-between py-4 px-3 sm:px-6 mb-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-[#111827]"
+          >
+            <ChevronLeft className="w-6 h-6" />
+            <span className="text-[17px] sm:text-[18px] font-medium text-[#111827]">Order Details</span>
+          </button>
+
+          <button 
+            onClick={() => window.open(`tel:${phone}`)}
+            className="w-9 h-9 rounded-full bg-[#1E4E70]/10 hover:bg-[#1E4E70]/20 flex items-center justify-center text-[#1E4E70] transition-colors"
+          >
+            <PhoneCall className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Desktop Navigation (Visible only on Desktop) */}
+        <div className="hidden md:flex items-center justify-between mb-6 px-4 sm:px-6 lg:px-8 mt-6">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-1 py-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-[#1E4E70] transition-colors -ml-2"
+          >
+            <ChevronLeft className="w-6 h-6" />
+            <span className="font-medium text-[15px]">Back</span>
+          </button>
+
+          <button 
+            onClick={() => window.open(`tel:${phone}`)}
+            className="w-10 h-10 rounded-full bg-[#1E4E70]/10 hover:bg-[#1E4E70]/20 flex items-center justify-center text-[#1E4E70] transition-colors"
+          >
+            <PhoneCall className="w-4 h-4" />
+          </button>
+        </div>
+
+      <div className="px-2 sm:px-6 lg:px-8">
       {/* 1. TOP HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -250,17 +287,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
         
-        <div className="flex gap-2 w-full sm:w-auto self-start sm:self-auto">
-          <button className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 text-[14px] font-medium px-4 py-2.5 rounded-xl transition-all border border-slate-200">
-             <MessageSquare className="w-4 h-4" /> Chat
-          </button>
-          <button 
-            onClick={() => window.open(`tel:${phone}`)}
-            className="flex-1 sm:flex-none flex justify-center items-center gap-2 bg-[#A5D8FF]/20 hover:bg-[#A5D8FF]/30 border border-[#A5D8FF]/50 text-[#1E4E70] text-[14px] font-medium px-4 py-2.5 rounded-xl transition-all"
-          >
-             <PhoneCall className="w-4 h-4" /> Call
-          </button>
-        </div>
+
       </div>
 
       {/* 2. SPECIAL INSTRUCTIONS ALERT */}
@@ -286,7 +313,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
         <div className="space-y-6">
           
           {/* Locations Timeline Card */}
-          <div className="bg-white rounded-lg border border-slate-200/80 p-6 overflow-hidden relative">
+          <div className="bg-white rounded-lg border border-slate-200/80 p-4 sm:p-6 overflow-hidden relative">
 
             
             <h2 className="text-[14px] font-medium text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
@@ -302,9 +329,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 <div className="absolute left-[-2.25rem] top-10 bottom-0 w-0.5 bg-slate-200 border-l-[2px] border-dashed border-slate-300"></div>
                 <p className="text-[13px] text-slate-500 mb-0.5">Pickup from Kitchen</p>
                 <p className="text-[15px] font-medium text-slate-900 leading-tight">{kitchenAddress}</p>
-                <button className="mt-3 w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-700 text-[13px] font-medium px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-200/50">
-                  <Navigation className="w-3.5 h-3.5" /> Navigate to Hub
-                </button>
+
               </div>
             </div>
 
@@ -317,15 +342,13 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                 <p className="text-[13px] text-slate-500 mb-0.5">Drop to Customer</p>
                 <p className="text-[16px] font-medium text-slate-900 leading-tight">{address}</p>
                 <p className="text-[14px] text-slate-500 mt-1">{city} • {distanceKm} km away</p>
-                <button className="mt-3 w-full sm:w-auto bg-slate-900 hover:bg-black text-white text-[13px] font-medium px-4 py-2 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm">
-                  <Navigation className="w-3.5 h-3.5" /> Navigate to Drop
-                </button>
+
               </div>
             </div>
           </div>
 
           {/* Package Details Card */}
-          <div className="bg-white rounded-lg border border-slate-200/80 p-6">
+          <div className="bg-white rounded-lg border border-slate-200/80 p-4 sm:p-6">
             <h2 className="text-[14px] font-medium text-slate-500 uppercase tracking-wider mb-5 flex items-center gap-2">
               <Package className="w-4 h-4" /> Package Contents
             </h2>
@@ -362,7 +385,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
         {/* RIGHT COLUMN: ACTION/VERIFICATION */}
         {/* sticky top-24 makes it float on scroll, but alignment matches the left column at the top */}
-        <div className="bg-white rounded-lg border border-slate-200/80 p-6 lg:p-8 sticky top-24">
+        <div className="bg-white rounded-lg border border-slate-200/80 p-4 sm:p-6 lg:p-8 sticky top-24">
           
           {order.status === "ready" ? (
             <div className="text-center">
@@ -501,6 +524,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           )}
 
         </div>
+      </div>
       </div>
       </div>
     </div>
