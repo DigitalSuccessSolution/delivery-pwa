@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
@@ -8,15 +8,39 @@ import { Mail, Lock, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 export default function MobileForgotPassword() {
   const router = useRouter();
   
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const [serverOtp, setServerOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  
+  const otpRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null)
+  ];
   
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    if (value && index < 3) {
+      otpRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
+  };
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +61,7 @@ export default function MobileForgotPassword() {
 
       if (data.success) {
         setSuccessMsg(data.message || "OTP sent successfully!");
+        if (data.otp) setServerOtp(data.otp);
         setStep(2);
       } else {
         setErrorMsg(data.message || "Failed to send OTP.");
@@ -66,6 +91,7 @@ export default function MobileForgotPassword() {
 
       if (data.success) {
         setSuccessMsg(data.message || "OTP resent successfully!");
+        if (data.otp) setServerOtp(data.otp);
       } else {
         setErrorMsg(data.message || "Failed to resend OTP.");
       }
@@ -76,9 +102,24 @@ export default function MobileForgotPassword() {
     }
   };
 
+  const handleVerifyOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    const enteredOtp = otp.join('');
+    if (enteredOtp.length !== 4) return;
+    
+    if (serverOtp && enteredOtp !== serverOtp) {
+      setErrorMsg("Invalid OTP. Please try again.");
+      return;
+    }
+    
+    setErrorMsg("");
+    setStep(3);
+  };
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp || !newPassword) return;
+    const otpString = otp.join('');
+    if (otpString.length !== 4 || !newPassword) return;
 
     setIsLoading(true);
     setErrorMsg("");
@@ -89,7 +130,12 @@ export default function MobileForgotPassword() {
       const res = await fetch(`${apiUrl}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp, password: newPassword }),
+        body: JSON.stringify({ 
+          email, 
+          otp: otpString, 
+          password: newPassword,
+          confirmPassword: newPassword 
+        }),
       });
       const data = await res.json();
 
@@ -142,12 +188,14 @@ export default function MobileForgotPassword() {
         {/* Title Section */}
         <div className="flex-shrink-0 w-full text-center mb-8 space-y-2 opacity-0 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
           <h2 className="text-[26px] font-semibold text-slate-800 tracking-tight">
-            {step === 1 ? "Reset Password" : "Enter OTP"}
+            {step === 1 ? "Reset Password" : step === 2 ? "Enter OTP" : "New Password"}
           </h2>
           <p className="text-[13px] font-medium text-slate-500">
             {step === 1 
               ? "Enter your email to receive an OTP" 
-              : "Enter the OTP sent to your email"}
+              : step === 2 
+                ? "Enter the OTP sent to your email" 
+                : "Create a strong new password"}
           </p>
         </div>
 
@@ -194,20 +242,49 @@ export default function MobileForgotPassword() {
           )}
 
           {step === 2 && (
-            <form onSubmit={handleResetPassword} className="flex flex-col space-y-5">
-              <div className="space-y-1.5">
-                <label className="text-[12px] font-medium text-slate-700 ml-1">OTP Code</label>
-                <input
-                  type="text"
-                  required
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-slate-200 rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 focus:border-[#A5D8FF] transition-all text-center tracking-widest"
-                  placeholder="Enter 4-digit OTP"
-                  maxLength={4}
-                />
+            <form onSubmit={handleVerifyOtp} className="flex flex-col space-y-6 pt-2">
+              <div className="space-y-4 text-center">
+                <label className="text-[13px] font-medium text-slate-700 block mb-3">Enter 4-Digit OTP</label>
+                <div className="flex justify-center gap-3">
+                  {[0, 1, 2, 3].map((index) => (
+                    <input
+                      key={index}
+                      ref={otpRefs[index]}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={otp[index]}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      className="w-12 h-12 bg-white border border-slate-200 rounded-[12px] text-slate-900 text-xl font-semibold text-center focus:outline-none focus:ring-1 focus:ring-[#A5D8FF] focus:border-[#A5D8FF] transition-all"
+                    />
+                  ))}
+                </div>
               </div>
 
+              <button
+                type="submit"
+                disabled={otp.join('').length !== 4}
+                className="w-full bg-[#1E4E70] text-white rounded-[14px] py-3.5 text-[15px] font-semibold active:scale-[0.98] transition-transform flex items-center justify-center mt-2 disabled:opacity-70"
+              >
+                Verify OTP
+              </button>
+
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={isLoading}
+                  className="text-[13px] font-medium text-slate-500 hover:text-[#1E4E70] transition-colors"
+                >
+                  Didn't receive the code? <span className="font-semibold text-[#1E4E70]">Resend OTP</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === 3 && (
+            <form onSubmit={handleResetPassword} className="flex flex-col space-y-5">
               <div className="space-y-1.5">
                 <label className="text-[12px] font-medium text-slate-700 ml-1">New Password</label>
                 <div className="relative">
@@ -239,17 +316,6 @@ export default function MobileForgotPassword() {
               >
                 {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Reset Password"}
               </button>
-
-              <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={isLoading}
-                  className="text-[13px] font-medium text-slate-500 hover:text-[#1E4E70] transition-colors"
-                >
-                  Didn't receive the code? <span className="font-semibold text-[#1E4E70]">Resend OTP</span>
-                </button>
-              </div>
             </form>
           )}
 
