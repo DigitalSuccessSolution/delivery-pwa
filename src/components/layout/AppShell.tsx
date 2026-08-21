@@ -86,7 +86,7 @@ export default function AppShell({ children }: AppShellProps) {
   // UNAUTHENTICATED (Logged Out): Full-width landing layout without sidebar w-64 gap
   if (!isLoggedIn) {
     return (
-      <div className="fixed inset-0 h-[100dvh] w-full bg-[#F8F9FA] flex flex-col overflow-hidden">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-white flex flex-col overflow-hidden">
         <main className="w-full h-full flex-1 overflow-hidden">{children}</main>
       </div>
     );
@@ -95,7 +95,7 @@ export default function AppShell({ children }: AppShellProps) {
   // AUTHENTICATED (Logged In): Fixed Shell — Sidebar & Header never scroll
   return (
     <>
-      <div className="h-[100dvh] flex bg-[#F8F9FA] text-slate-800 antialiased selection:bg-[#A5D8FF] font-sans overflow-hidden">
+      <div className="h-[100dvh] flex bg-white text-slate-800 antialiased selection:bg-[#A5D8FF] font-sans overflow-hidden">
         {/* Desktop Navigation Sidebar — Fixed column, never scrolls */}
         <div className="hidden lg:flex shrink-0">
           <Sidebar />

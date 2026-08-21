@@ -92,7 +92,7 @@ export default function MobileHeader() {
   // INNER SUBPAGE HEADER: Back Arrow + Page Title (Only visible on mobile md:hidden)
   if (!isMainTabRoute) {
     return (
-      <header className="md:hidden sticky top-0 z-30 bg-white border-b border-slate-200/80 px-4 py-3.5 transition-all shadow-xs w-full">
+      <header className="md:hidden sticky top-0 z-30 bg-white px-4 py-3.5 transition-all w-full">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <button
@@ -122,7 +122,7 @@ export default function MobileHeader() {
 
   // MAIN TAB HEADER (Mobile)
   return (
-    <header className="md:hidden sticky top-0 z-30 bg-white border-b border-slate-100 px-4 py-3.5 transition-all w-full">
+    <header className="md:hidden sticky top-0 z-30 bg-white px-4 py-3.5 transition-all w-full">
       <div className="flex items-center justify-between">
         
         {/* Left: Profile & Name */}

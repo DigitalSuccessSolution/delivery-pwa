@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen font-sans pb-24 md:pb-8 pt-0 md:pt-8 max-w-5xl mx-auto">
       {/* Mobile Sticky Header (Visible only on Mobile) */}
-      <div className="md:hidden sticky top-0 z-40 bg-[#F8F9FA] flex items-center py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 mb-4">
+      <div className="md:hidden sticky top-0 z-40 bg-white flex items-center py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 mb-4">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-[#111827]"
@@ -20,16 +20,7 @@ export default function PrivacyPolicyPage() {
         </button>
       </div>
 
-      {/* Desktop Navigation (Visible only on Desktop) */}
-      <div className="hidden md:flex items-center mb-6 -ml-3 md:ml-0">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-1 px-3 py-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-[#1E4E70] transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6" />
-          <span className="font-semibold text-[15px]">Back</span>
-        </button>
-      </div>
+
 
       {/* Desktop Page Header */}
       <div className="hidden md:flex flex-col mb-4 px-1 lg:mb-8">

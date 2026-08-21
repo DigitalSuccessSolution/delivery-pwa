@@ -91,7 +91,7 @@ export default function OrdersPage() {
           distanceKm: order.distanceKm || 2.5,
           itemSummary: order.items?.map((i: any) => i.mealId?.name || i.productId?.name || "Item").join(", ") || "No items",
           packCount: order.items?.reduce((acc: number, item: any) => acc + item.quantity, 0) || 0,
-          mealImage: order.items?.[0]?.mealId?.imageUrl || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=800"
+          mealImage: order.items?.[0]?.mealId?.imageUrl || order.items?.[0]?.productId?.imageUrl || ""
         }));
         setTasks(mappedOrders);
       }
@@ -292,13 +292,25 @@ export default function OrdersPage() {
                 {/* Meal Items Summary */}
                 <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-3 overflow-hidden">
-                    <Image
-                      src={order.mealImage}
-                      alt="Meal"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8 rounded-full object-cover shrink-0"
-                    />
+                    <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center">
+                      {order.mealImage ? (
+                        <img
+                          src={order.mealImage}
+                          alt="Meal"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            target.style.display = 'none';
+                            const emoji = document.createElement('span');
+                            emoji.className = 'text-sm';
+                            emoji.textContent = '🥣';
+                            target.parentElement?.appendChild(emoji);
+                          }}
+                        />
+                      ) : (
+                        <span className="text-sm">🥣</span>
+                      )}
+                    </div>
                     <p className="text-[13px] sm:text-[14px] font-medium text-black truncate opacity-90">
                       {order.itemSummary}
                     </p>

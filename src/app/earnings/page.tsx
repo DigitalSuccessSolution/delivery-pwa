@@ -135,7 +135,7 @@ export default function EarningsPage() {
       backdrop: 'rgba(15, 23, 42, 0.4)',
       customClass: {
         popup: 'rounded-2xl',
-        confirmButton: 'rounded-lg font-medium shadow-sm',
+        confirmButton: 'rounded-lg font-medium',
         container: 'backdrop-blur-sm'
       }
     }).then(async (result) => {
@@ -174,7 +174,7 @@ export default function EarningsPage() {
               confirmButtonColor: '#1e3050',
               customClass: {
                 popup: 'rounded-2xl',
-                confirmButton: 'rounded-lg font-medium shadow-sm',
+                confirmButton: 'rounded-lg font-medium',
               }
             });
             fetchData();
@@ -243,7 +243,7 @@ export default function EarningsPage() {
               </h2>
             </div>
             {/* Money Image */}
-            <div className="absolute right-2 bottom-1/2 translate-y-1/2 w-[110px] h-[110px] flex items-center justify-center z-0 drop-shadow-sm opacity-90 pointer-events-none">
+            <div className="absolute right-2 bottom-1/2 translate-y-1/2 w-[110px] h-[110px] flex items-center justify-center z-0 opacity-90 pointer-events-none">
               <Image 
                 src="/images/money.png" 
                 alt="Money" 
@@ -308,9 +308,9 @@ export default function EarningsPage() {
               <button
                 onClick={handlePayoutRequest}
                 disabled={walletBalance <= 0 || isRequestingPayout}
-                className={`w-full font-medium text-[14px] py-3 rounded-lg shadow-sm transition-all flex items-center justify-between px-5 active:scale-[0.98] mt-auto ${walletBalance > 0
-                    ? "bg-blue-500 hover:bg-blue-600 text-white"
-                    : "bg-slate-100 text-black cursor-not-allowed"
+                className={`w-full font-medium text-[14px] py-3 rounded-lg transition-all flex items-center justify-between px-5 active:scale-[0.98] mt-auto ${walletBalance > 0
+                  ? "bg-[#1E4E70] text-white"
+                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
                   }`}
               >
                 <span>{isRequestingPayout ? "Requesting..." : "Request Payout Now"}</span>
@@ -331,7 +331,7 @@ export default function EarningsPage() {
               onClick={() => setActiveTab('earnings')}
               className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[13px] font-medium transition-all ${
                 activeTab === 'earnings' 
-                  ? 'bg-emerald-100/80 text-black shadow-sm' 
+                  ? 'bg-emerald-100/80 text-black' 
                   : 'bg-white text-black hover:bg-slate-50'
               }`}
             >
@@ -341,7 +341,7 @@ export default function EarningsPage() {
               onClick={() => setActiveTab('payouts')}
               className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-[13px] font-medium transition-all ${
                 activeTab === 'payouts' 
-                  ? 'bg-emerald-100/80 text-black shadow-sm' 
+                  ? 'bg-emerald-100/80 text-black' 
                   : 'bg-white text-black hover:bg-slate-50'
               }`}
             >
@@ -368,7 +368,7 @@ export default function EarningsPage() {
             filteredEarnings.map((earning) => (
               <div
                 key={earning._id}
-                className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_-3px_rgba(6,81,237,0.05)] p-4 sm:p-5 hover:border-slate-200 transition-colors group"
+                className="bg-white rounded-xl border border-slate-100 p-4 sm:p-5 hover:border-slate-200 transition-colors group"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex flex-col">
@@ -412,7 +412,7 @@ export default function EarningsPage() {
             payouts.map((payout) => (
               <div
                 key={payout._id}
-                className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_-3px_rgba(6,81,237,0.05)] p-4 sm:p-5 hover:border-slate-200 transition-colors group"
+                className="bg-white rounded-xl border border-slate-100 p-4 sm:p-5 hover:border-slate-200 transition-colors group"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex flex-col">
@@ -455,7 +455,7 @@ export default function EarningsPage() {
           )}
 
           {activeTab === 'earnings' && filteredEarnings.length === 0 && (
-            <div className="bg-white rounded-lg border border-slate-100 shadow-sm p-10 flex flex-col items-center justify-center text-center animate-fade-in-up mt-2">
+            <div className="bg-white rounded-lg border border-slate-100 p-10 flex flex-col items-center justify-center text-center animate-fade-in-up mt-2">
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-100">
                 <Filter className="w-6 h-6 text-black" />
               </div>
@@ -475,7 +475,7 @@ export default function EarningsPage() {
           )}
           
           {activeTab === 'payouts' && payouts.length === 0 && (
-            <div className="bg-white rounded-lg border border-slate-100 shadow-sm p-10 flex flex-col items-center justify-center text-center animate-fade-in-up mt-2">
+            <div className="bg-white rounded-lg border border-slate-100 p-10 flex flex-col items-center justify-center text-center animate-fade-in-up mt-2">
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3 border border-slate-100">
                 <Wallet className="w-6 h-6 text-black" />
               </div>

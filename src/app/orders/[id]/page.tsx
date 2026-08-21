@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, use } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { 
   PhoneCall, 
   MapPin, 
@@ -121,10 +122,20 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
       if (data.success) {
         setOrder(data.data);
       } else {
-        alert("Failed to confirm pickup: " + data.message);
+        Swal.fire({
+          title: "Error",
+          text: "Failed to confirm pickup: " + data.message,
+          icon: "error",
+          confirmButtonColor: "#1E4E70"
+        });
       }
     } catch (err) {
-      alert("Error confirming pickup. Please try again.");
+      Swal.fire({
+        title: "Error",
+        text: "Error confirming pickup. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#1E4E70"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -136,11 +147,21 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
     
     const enteredOtp = otp.join("");
     if (order.isOtpRequired && enteredOtp.length < 4) {
-      alert("Please enter the 4-digit OTP provided by the customer.");
+      Swal.fire({
+        title: "Incomplete OTP",
+        text: "Please enter the 4-digit OTP provided by the customer.",
+        icon: "warning",
+        confirmButtonColor: "#1E4E70"
+      });
       return;
     }
     if (!photoCaptured) {
-      alert("Please capture a photo as proof of delivery.");
+      Swal.fire({
+        title: "Photo Required",
+        text: "Please capture a photo as proof of delivery.",
+        icon: "warning",
+        confirmButtonColor: "#1E4E70"
+      });
       return;
     }
 
@@ -174,10 +195,20 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           router.push("/orders");
         }, 2000);
       } else {
-        alert("Failed to complete delivery: " + data.message);
+        Swal.fire({
+          title: "Error",
+          text: "Failed to complete delivery: " + data.message,
+          icon: "error",
+          confirmButtonColor: "#1E4E70"
+        });
       }
     } catch (err) {
-      alert("Error completing delivery. Please try again.");
+      Swal.fire({
+        title: "Error",
+        text: "Error completing delivery. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#1E4E70"
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +216,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   if (isLoading) {
     return (
-      <div className="w-full font-sans min-h-screen bg-slate-50/50 flex flex-col items-center justify-center">
+      <div className="w-full font-sans min-h-screen bg-white flex flex-col items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-emerald-600 mb-4" />
         <p className="text-slate-500 font-medium">Loading order details...</p>
       </div>
@@ -194,7 +225,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
 
   if (!order) {
     return (
-      <div className="w-full font-sans min-h-screen bg-slate-50/50 flex flex-col items-center justify-center">
+      <div className="w-full font-sans min-h-screen bg-white flex flex-col items-center justify-center">
         <p className="text-slate-500 font-medium">Order not found.</p>
         <button onClick={() => router.push('/orders')} className="mt-4 text-emerald-600 font-medium">Go Back</button>
       </div>
@@ -212,11 +243,10 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
   const allergies = order.babyId?.allergies || [];
 
   return (
-    <div className="w-full font-sans pb-24 min-h-screen bg-[#F8F9FA] animate-fade-in-up">
-      <div className="w-full">
+    <div className="w-full font-sans animate-fade-in-up">
         
         {/* Mobile Sticky Header (Visible only on Mobile) */}
-        <div className="md:hidden sticky top-0 z-40 bg-[#F8F9FA] flex items-center justify-between py-4 px-3 sm:px-6 mb-4">
+        <div className="md:hidden sticky top-0 z-40 bg-white flex items-center justify-between py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 mb-2">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-[#111827]"
@@ -234,15 +264,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
         </div>
 
         {/* Desktop Navigation (Visible only on Desktop) */}
-        <div className="hidden md:flex items-center justify-between mb-6 px-4 sm:px-6 lg:px-8 mt-6">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-1 py-2 rounded-full text-gray-700 hover:bg-gray-100 hover:text-[#1E4E70] transition-colors -ml-2"
-          >
-            <ChevronLeft className="w-6 h-6" />
-            <span className="font-medium text-[15px]">Back</span>
-          </button>
-
+        <div className="hidden md:flex items-center justify-end mb-0 -mt-2">
           <button 
             onClick={() => window.open(`tel:${phone}`)}
             className="w-10 h-10 rounded-full bg-[#1E4E70]/10 hover:bg-[#1E4E70]/20 flex items-center justify-center text-[#1E4E70] transition-colors"
@@ -250,8 +272,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
             <PhoneCall className="w-4 h-4" />
           </button>
         </div>
-
-      <div className="px-2 sm:px-6 lg:px-8">
       {/* 1. TOP HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
@@ -357,8 +377,27 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
               {order.items?.map((item: any, idx: number) => (
                 <div key={item._id || idx} className="flex items-center justify-between py-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                      <span className="text-2xl">{item.itemType === 'meal' ? "🥣" : "📦"}</span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-slate-100 flex items-center justify-center">
+                      {(() => {
+                        const imgUrl = item.mealId?.imageUrl || item.mealId?.images?.[0] || item.productId?.imageUrl || item.productId?.images?.[0];
+                        return imgUrl ? (
+                          <img
+                            src={imgUrl}
+                            alt={item.mealId?.name || item.productId?.name || "Item"}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              target.style.display = 'none';
+                              const emoji = document.createElement('span');
+                              emoji.className = 'text-xl';
+                              emoji.textContent = item.itemType === 'meal' ? '🥣' : '📦';
+                              target.parentElement?.appendChild(emoji);
+                            }}
+                          />
+                        ) : (
+                          <span className="text-xl">{item.itemType === 'meal' ? "🥣" : "📦"}</span>
+                        );
+                      })()}
                     </div>
                     <div>
                       <h3 className="text-[14px] sm:text-[15px] font-medium text-slate-900 leading-tight mb-0.5">
@@ -428,75 +467,78 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
               
               <div className="space-y-8">
                 
-                {/* STEP 1: OTP */}
+                {/* OTP */}
                 {order.isOtpRequired && (
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[12px] font-medium flex items-center justify-center">1</span>
-                      <label className="text-[15px] font-medium text-slate-900">Customer OTP</label>
-                    </div>
-                    <div className="flex gap-3 justify-between pl-8">
+                    <label className="text-[15px] font-medium text-slate-900 mb-3 block">Customer OTP</label>
+                    <div className="flex gap-3 justify-between">
                       {otp.map((digit, i) => (
                         <input
                           key={i}
                           id={`otp-${i}`}
-                          type="number"
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={1}
                           value={digit}
-                          onChange={(e) => handleOtpChange(i, e.target.value)}
-                          className="w-full aspect-square bg-slate-50 border border-slate-200 rounded-lg text-center text-2xl font-medium text-slate-900 focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600/50 transition-all"
-                          placeholder="-"
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, '');
+                            handleOtpChange(i, val);
+                            if (val && i < otp.length - 1) {
+                              document.getElementById(`otp-${i + 1}`)?.focus();
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Backspace' && !digit && i > 0) {
+                              document.getElementById(`otp-${i - 1}`)?.focus();
+                            }
+                          }}
+                          className="w-full aspect-square bg-slate-50 border border-slate-200 rounded-xl text-center text-2xl font-semibold text-slate-900 focus:outline-none focus:border-slate-400 transition-all"
+                          placeholder=""
                         />
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* STEP 2: PHOTO */}
+                {/* PHOTO */}
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-[12px] font-medium flex items-center justify-center">
-                      {order.isOtpRequired ? "2" : "1"}
-                    </span>
-                    <label className="text-[15px] font-medium text-slate-900">Photo Proof</label>
-                  </div>
-                  <div className="pl-8">
-                    {!photoCaptured ? (
-                      <div className="relative w-full py-6 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 border-dashed text-slate-600 rounded-lg transition-all flex flex-col items-center justify-center gap-3 group overflow-hidden cursor-pointer">
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          capture="environment" 
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setPhotoFile(e.target.files[0]);
-                              setPhotoCaptured(true);
-                            }
-                          }}
-                          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" 
-                        />
-                        <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <Camera className="w-5 h-5 text-slate-500" />
-                        </div>
-                        <span className="text-[14px] font-medium">Tap to open camera</span>
+                  <label className="text-[15px] font-medium text-slate-900 mb-3 block">Photo Proof</label>
+                  {!photoCaptured ? (
+                    <div className="relative w-full py-6 bg-slate-50 hover:bg-slate-100 border-2 border-slate-200 border-dashed text-slate-600 rounded-lg transition-all flex flex-col items-center justify-center gap-3 group overflow-hidden cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        capture="environment" 
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setPhotoFile(e.target.files[0]);
+                            setPhotoCaptured(true);
+                          }
+                        }}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10" 
+                      />
+                      <div className="w-12 h-12 rounded-full bg-white border border-slate-200 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Camera className="w-5 h-5 text-slate-500" />
                       </div>
-                    ) : (
-                      <div className="w-full py-6 bg-emerald-50 border-2 border-emerald-200 text-emerald-700 rounded-lg flex flex-col items-center justify-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-white border border-emerald-200 flex items-center justify-center">
-                          <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                        </div>
-                        <span className="text-[14px] font-medium">Photo securely captured</span>
-                        <button 
-                          onClick={() => {
-                            setPhotoCaptured(false);
-                            setPhotoFile(null);
-                          }}
-                          className="text-xs font-medium text-emerald-700 underline mt-1 z-20 relative cursor-pointer"
-                        >
-                          Retake Photo
-                        </button>
+                      <span className="text-[14px] font-medium">Tap to open camera</span>
+                    </div>
+                  ) : (
+                    <div className="w-full py-6 bg-emerald-50 border-2 border-emerald-200 text-emerald-700 rounded-lg flex flex-col items-center justify-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-white border border-emerald-200 flex items-center justify-center">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500" />
                       </div>
-                    )}
-                  </div>
+                      <span className="text-[14px] font-medium">Photo securely captured</span>
+                      <button 
+                        onClick={() => {
+                          setPhotoCaptured(false);
+                          setPhotoFile(null);
+                        }}
+                        className="text-xs font-medium text-emerald-700 underline mt-1 z-20 relative cursor-pointer"
+                      >
+                        Retake Photo
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* SUBMIT */}
@@ -524,8 +566,6 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
           )}
 
         </div>
-      </div>
-      </div>
       </div>
     </div>
   );

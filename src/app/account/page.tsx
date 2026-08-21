@@ -89,7 +89,7 @@ export default function AccountPage() {
   if (!mounted) return null;
 
   return (
-    <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-white animate-fade-in font-sans w-full overflow-y-auto">
+    <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-white animate-fade-in font-sans w-full overflow-hidden">
       
       {/* Top Section with Curved Background */}
       <div className="relative w-full h-[150px] shrink-0 bg-[#1E4E70] rounded-b-[40px] overflow-hidden">

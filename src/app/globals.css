@@ -111,10 +111,10 @@
   --primary: #A5D8FF;
   --secondary: #FFD1DC;
   --tertiary: #B2F2BB;
-  --neutral: #F8F9FA;
+  --neutral: #FFFFFF;
   --deep-teal: #1E4E70;
 
-  --background: #F8F9FA;
+  --background: #FFFFFF;
   --surface: #FFFFFF;
   --text-dark: #1E4E70;
   --text-muted: #64748B;
@@ -125,7 +125,7 @@
 }
 
 body {
-  background-color: #F8F9FA;
+  background-color: #FFFFFF;
   color: #1E4E70;
   font-family: var(--font-poppins), 'Poppins', system-ui, -apple-system, sans-serif !important;
   -webkit-tap-highlight-color: transparent;
