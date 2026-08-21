@@ -55,6 +55,9 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
         }
 
         localStorage.setItem("moncradel_rider_token", data.token);
+        // Security enhancement: Save token as a cookie
+        document.cookie = `moncradel_rider_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
+        
         localStorage.setItem("moncradel_rider_user", JSON.stringify({
           _id: data._id,
           name: data.name,
@@ -80,7 +83,7 @@ export default function MobileLogin({ onSwitchToRegister }: MobileLoginProps) {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#F8F9FA] relative px-4 py-6 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] w-full bg-white relative px-4 py-6 overflow-hidden font-sans">
       <div className="w-full flex flex-col h-full max-w-sm mx-auto">
         
         {/* Spacer above logo */}

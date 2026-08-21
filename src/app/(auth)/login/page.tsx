@@ -62,6 +62,9 @@ export default function LoginPage() {
         }
 
         localStorage.setItem("moncradel_rider_token", data.token);
+        // Security enhancement: Save token as a cookie
+        document.cookie = `moncradel_rider_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
+        
         localStorage.setItem("moncradel_rider_user", JSON.stringify({
           _id: data._id,
           name: data.name,

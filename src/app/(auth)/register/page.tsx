@@ -230,7 +230,7 @@ export default function RegisterPage() {
                           className={`w-full pl-10 pr-4 py-3 bg-white border rounded-xl text-slate-900 text-[15px] font-medium focus:outline-none focus:ring-0 transition-all ${
                             fieldErrors.name ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
                           }`}
-                          placeholder="John Doe"
+                          placeholder="Enter your full name"
                         />
                       </div>
                       {fieldErrors.name && <p className="text-red-500 text-[12px] font-medium ml-1 mt-1">{fieldErrors.name}</p>}

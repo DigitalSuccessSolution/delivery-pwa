@@ -442,7 +442,7 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className={labelClass}>Full Name</label>
-                      <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} placeholder="John Doe" required />
+                      <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputClass} placeholder="Enter full name" required />
                     </div>
                     <div>
                       <label className={labelClass}>Full Address</label>

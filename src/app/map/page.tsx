@@ -116,10 +116,8 @@ function MapContent() {
             latitude: lat,
             longitude: lng
           });
-
-          // Simulate Distance if order has customer coordinates
-          setDistanceKm((Math.random() * 2 + 1).toFixed(1)); // Dummy changing distance
-          setEtaMins(Math.floor(Math.random() * 5 + 5).toString());
+          
+          // TODO: Calculate real distance using Mapbox/Google Maps distance matrix
         },
         (error) => {
           console.error("Error watching position:", error);

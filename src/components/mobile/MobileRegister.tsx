@@ -113,7 +113,7 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#F8F9FA] relative px-4 py-6 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] w-full bg-white relative px-4 py-6 overflow-hidden font-sans">
       <div className="w-full flex flex-col h-full max-w-sm mx-auto">
         
         {/* Spacer above logo */}
@@ -175,7 +175,7 @@ export default function MobileRegister({ onSwitchToLogin }: MobileRegisterProps)
                       className={`w-full pl-10 pr-3 py-3 bg-white border rounded-[14px] text-slate-900 text-[14px] font-medium focus:outline-none focus:ring-0 transition-all ${
                         fieldErrors.name ? "border-red-400 focus:border-red-500" : "border-slate-200 focus:border-[#A5D8FF]"
                       }`}
-                      placeholder="John Doe"
+                      placeholder="Enter your full name"
                     />
                   </div>
                   {fieldErrors.name && <p className="text-red-500 text-[11px] font-medium ml-1 mt-1">{fieldErrors.name}</p>}

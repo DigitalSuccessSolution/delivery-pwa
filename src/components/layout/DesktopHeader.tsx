@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Bell, Search, Bike } from "lucide-react";
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { INITIAL_NOTIFICATIONS } from "@/data/mockData";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { fetchNotifications } from "@/store/slices/notificationSlice";
